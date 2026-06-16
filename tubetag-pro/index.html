@@ -1,0 +1,2867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
+<meta name="theme-color" content="#060b18"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="TubeTag"/>
+<meta name="description" content="Smart QR labels for every lab sample — Free & Pro plans"/>
+<title>TubeTag — Smart Lab QR Labels</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"/>
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#060b18;--bg2:#0d1526;--bg3:#111d35;--card:#0f1a2e;
+  --border:#1a2d5a;--border2:#2a4070;
+  --cyan:#00e5ff;--purple:#7c3aed;--green:#22c55e;
+  --amber:#f59e0b;--red:#ef4444;--rose:#ff6b8a;
+  --gold:#f5c842;
+  --text:#e8f0ff;--text2:#8aafd4;--muted:#3a5070;
+  --pro-from:#f5c842;--pro-to:#ff6b8a;
+  --ff:'Space Grotesk',sans-serif;
+  --fm:'Space Mono',monospace;
+  --r:12px;--rs:8px;
+  --sat:env(safe-area-inset-top,0px);
+  --sab:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--ff);overflow:hidden;}
+
+/* grid bg */
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,229,255,0.02) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,255,0.02) 1px,transparent 1px);
+  background-size:32px 32px;pointer-events:none;z-index:0;}
+
+.app{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh;padding-top:var(--sat);}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;padding:11px 16px 9px;
+  border-bottom:1px solid var(--border);background:rgba(6,11,24,0.95);
+  backdrop-filter:blur(16px);flex-shrink:0;gap:10px;}
+.brand{font-size:1.2rem;font-weight:700;letter-spacing:-0.5px;flex:1;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.pro-badge{background:linear-gradient(135deg,var(--pro-from),var(--pro-to));
+  color:#1a0a00;font-size:9px;font-weight:700;padding:2px 8px;
+  border-radius:20px;letter-spacing:1px;cursor:pointer;flex-shrink:0;}
+.free-badge{background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);
+  color:var(--green);font-size:9px;font-weight:700;padding:2px 8px;
+  border-radius:20px;letter-spacing:1px;cursor:pointer;flex-shrink:0;}
+.user-btn{width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:#060b18;flex-shrink:0;}
+.icon-btn-bt{width:32px;height:32px;border-radius:50%;background:var(--bg3);
+  border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;font-size:15px;flex-shrink:0;transition:border-color .2s;}
+.icon-btn-bt:hover{border-color:var(--cyan);}
+.icon-btn-bt.connected{border-color:var(--green);}
+
+/* quota bar */
+.quota-bar{padding:6px 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;}
+.quota-row{display:flex;align-items:center;gap:8px;}
+.quota-label{font-family:var(--fm);font-size:10px;color:var(--text2);flex:1;}
+.quota-track{flex:2;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.quota-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--cyan),var(--purple));transition:width .4s;}
+.quota-fill.warn{background:linear-gradient(90deg,var(--amber),var(--red));}
+.quota-count{font-family:var(--fm);font-size:10px;color:var(--text2);}
+
+/* ── TABBAR ── */
+.tabbar{display:flex;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 2px 7px;
+  cursor:pointer;font-size:10px;font-weight:500;letter-spacing:.3px;color:var(--muted);
+  border-bottom:2px solid transparent;transition:color .15s;text-transform:uppercase;
+  -webkit-tap-highlight-color:transparent;}
+.tab.on{color:var(--cyan);border-bottom-color:var(--cyan);}
+.ti{font-size:16px;margin-bottom:2px;line-height:1;}
+
+/* ── SCROLL ── */
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+.scroll::-webkit-scrollbar{display:none;}
+.screen{display:none;padding:14px 14px calc(14px + var(--sab));}
+.screen.on{display:block;}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px 15px;margin-bottom:10px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+  background:linear-gradient(90deg,transparent,var(--cyan),var(--purple),transparent);opacity:.5;}
+.ct{font-family:var(--fm);font-size:10px;color:var(--cyan);letter-spacing:3px;
+  text-transform:uppercase;margin-bottom:10px;}
+
+/* ── FORM ── */
+.field{margin-bottom:10px;}
+.field label{display:block;font-family:var(--fm);font-size:10px;color:var(--text2);
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+input[type=text],input[type=number],input[type=email],input[type=tel],
+input[type=password],textarea,select{
+  width:100%;background:rgba(0,229,255,0.03);border:1px solid var(--border);
+  border-radius:var(--rs);padding:10px 12px;color:var(--text);
+  font-family:var(--ff);font-size:13px;outline:none;
+  transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none;}
+input::placeholder,textarea::placeholder{color:var(--muted);}
+input:focus,textarea:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,229,255,0.06);}
+select option{background:var(--bg2);}
+textarea{resize:vertical;min-height:70px;line-height:1.5;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+/* ── SIZE GRID ── */
+.sz-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:10px;}
+.sz-btn{background:rgba(0,229,255,0.02);border:1px solid var(--border);border-radius:var(--rs);
+  padding:7px 2px;cursor:pointer;text-align:center;transition:all .15s;
+  -webkit-tap-highlight-color:transparent;}
+.sz-btn.on{border-color:var(--cyan);background:rgba(0,229,255,0.07);}
+.sz-btn .sn{font-family:var(--fm);font-size:10px;font-weight:700;color:var(--text);display:block;}
+.sz-btn .sd{font-size:9px;color:var(--muted);display:block;margin-top:1px;line-height:1.3;}
+.sz-btn.on .sn{color:var(--cyan);}.sz-btn.on .sd{color:rgba(0,229,255,.5);}
+.sz-btn.locked{opacity:.5;cursor:not-allowed;}
+
+/* ── BUTTONS ── */
+.btn-row{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap;}
+.btn{flex:1;min-width:0;padding:10px 6px;border:1px solid var(--border);border-radius:var(--rs);
+  color:var(--text);font-family:var(--ff);font-weight:600;font-size:12px;cursor:pointer;
+  background:var(--bg3);transition:all .15s;text-align:center;white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;}
+.btn:active{transform:scale(.97);}
+.btn.primary{background:linear-gradient(135deg,#0a4d8c,var(--purple));border-color:transparent;color:#fff;}
+.btn.cyan{background:linear-gradient(135deg,rgba(0,229,255,.15),rgba(124,58,237,.15));border-color:var(--cyan);color:var(--cyan);}
+.btn.pro{background:linear-gradient(135deg,var(--pro-from),var(--pro-to));border-color:transparent;color:#1a0a00;font-weight:700;}
+.btn.success{border-color:var(--green);color:var(--green);}
+.btn.success:disabled{opacity:.3;cursor:not-allowed;}
+.btn.ghost{border-color:var(--border2);color:var(--text2);}
+.btn.danger{border-color:var(--red);color:var(--red);}
+
+/* ── PREVIEW WRAP ── */
+.pw{background:#e8e8e8;border-radius:var(--r);padding:8px;display:none;margin-bottom:10px;}
+.pw.vis{display:block;}
+.pt{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.pt span{font-family:var(--fm);font-size:10px;color:var(--muted);}
+.ls{background:#fff;display:flex;flex-wrap:wrap;gap:3px;padding:3px;border-radius:6px;}
+
+/* LABELS */
+.lbl{background:#fff;border:.5px solid #bbb;display:flex;align-items:center;font-family:Arial,sans-serif;overflow:hidden;}
+.lbl.s-micro{width:25mm;height:10mm;}.lbl.s-small{width:35mm;height:13mm;}
+.lbl.s-medium{width:50mm;height:18mm;}.lbl.s-large{width:70mm;height:25mm;}.lbl.s-xlarge{width:90mm;height:35mm;}
+.lbl-qr{flex-shrink:0;}.lbl-txt{padding:2px 4px;flex:1;overflow:hidden;}
+.lbl-txt span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.s-micro .li{font-size:5.5px;font-weight:700;color:#000;}.s-micro .lo,.s-micro .lg{font-size:4.5px;color:#444;}
+.s-small .li{font-size:6.5px;font-weight:700;color:#000;}.s-small .lo,.s-small .lg{font-size:5.5px;color:#444;}
+.s-medium .li{font-size:8px;font-weight:700;color:#000;}.s-medium .lo,.s-medium .lg{font-size:6.5px;color:#444;}
+.s-large .li{font-size:10px;font-weight:700;color:#000;}.s-large .lo,.s-large .lg{font-size:8px;color:#444;}
+.s-xlarge .li{font-size:13px;font-weight:700;color:#000;}.s-xlarge .lo,.s-xlarge .lg{font-size:10px;color:#444;}
+.lbl.clbl{flex-direction:column;justify-content:center;align-items:center;padding:2px;}
+.lbl.clbl .ct2{font-size:6px;color:#222;text-align:center;word-break:break-all;max-width:100%;padding:0 2px;line-height:1.3;margin-top:2px;}
+
+/* ── PRO UPGRADE BANNER ── */
+.pro-banner{
+  background:linear-gradient(135deg,rgba(245,200,66,0.08),rgba(255,107,138,0.06));
+  border:1px solid rgba(245,200,66,0.25);border-radius:var(--r);
+  padding:14px;margin-bottom:10px;text-align:center;
+}
+.pro-banner .pb-icon{font-size:28px;margin-bottom:6px;}
+.pro-banner .pb-title{font-weight:700;font-size:15px;margin-bottom:4px;}
+.pro-banner .pb-sub{font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5;}
+
+/* ── PRICING CARDS ── */
+.pricing-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.price-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 14px;}
+.price-card.featured{border-color:var(--gold);background:linear-gradient(160deg,rgba(245,200,66,0.06),var(--card));}
+.pc-name{font-weight:700;font-size:14px;margin-bottom:4px;}
+.pc-price{font-family:var(--fm);font-size:1.5rem;font-weight:700;color:var(--gold);margin-bottom:2px;}
+.pc-price small{font-size:11px;color:var(--muted);}
+.pc-features{margin:10px 0;list-style:none;}
+.pc-features li{font-size:11px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border);}
+.pc-features li:last-child{border:none;}
+.pc-features li.yes::before{content:'✓  ';color:var(--green);}
+.pc-features li.no::before{content:'✗  ';color:var(--muted);}
+.pc-features li.pro-only{color:var(--gold);}
+.pc-features li.pro-only::before{content:'★  ';color:var(--gold);}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);
+  backdrop-filter:blur(6px);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-overlay.vis{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r) var(--r) 0 0;width:100%;max-width:520px;
+  max-height:92vh;overflow-y:auto;padding:18px 18px calc(18px + var(--sab));
+  animation:slideUp .3s ease;}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.modal-handle{width:32px;height:3px;background:var(--border2);border-radius:2px;margin:0 auto 14px;}
+.modal-title{font-size:1.1rem;font-weight:700;margin-bottom:3px;}
+.modal-sub{font-family:var(--fm);font-size:10px;color:var(--muted);margin-bottom:14px;letter-spacing:1px;}
+.modal-close{float:right;background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer;line-height:1;margin-top:-4px;}
+
+/* ── PAYMENT ── */
+.pay-methods{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.pay-m{background:var(--bg3);border:2px solid var(--border);border-radius:var(--rs);
+  padding:11px;cursor:pointer;transition:all .15s;text-align:center;}
+.pay-m.on{border-color:var(--cyan);background:rgba(0,229,255,0.06);}
+.pay-m .pmi{font-size:20px;margin-bottom:3px;}
+.pay-m .pmn{font-size:11px;font-weight:600;color:var(--text);}
+.pay-m .pms{font-size:10px;color:var(--muted);}
+.rzp-badge{display:flex;align-items:center;justify-content:center;gap:6px;
+  background:rgba(0,212,170,0.06);border:1px solid rgba(0,212,170,0.2);
+  border-radius:var(--rs);padding:7px;margin-bottom:10px;font-size:11px;color:#00d4aa;
+  font-family:var(--fm);}
+
+/* ── AUTH ── */
+.auth-wrap{display:flex;flex-direction:column;align-items:center;padding:32px 20px;text-align:center;}
+.auth-logo{font-size:2.5rem;font-weight:700;background:linear-gradient(135deg,var(--cyan),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:8px;letter-spacing:-1px;}
+.auth-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:24px;}
+.google-btn{display:flex;align-items:center;gap:10px;background:#fff;color:#1a1a1a;
+  border:none;border-radius:var(--rs);padding:12px 20px;font-size:14px;font-weight:600;
+  cursor:pointer;width:100%;max-width:300px;justify-content:center;margin-bottom:10px;
+  transition:all .2s;}
+.google-btn:hover{background:#f0f0f0;}
+.google-icon{width:20px;height:20px;flex-shrink:0;}
+.skip-btn{background:transparent;border:1px solid var(--border);border-radius:var(--rs);
+  padding:10px 20px;font-size:13px;color:var(--text2);cursor:pointer;width:100%;max-width:300px;}
+
+/* ── SCAN ── */
+.scan-box{background:#000;border-radius:var(--r);overflow:hidden;margin-bottom:10px;
+  position:relative;min-height:220px;display:flex;align-items:center;justify-content:center;}
+.scan-video{width:100%;display:block;border-radius:var(--r);}
+.scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.scan-frame{width:170px;height:170px;position:relative;}
+.scan-frame::before,.scan-frame::after,.scan-frame .c1,.scan-frame .c2{content:'';position:absolute;width:20px;height:20px;border-color:var(--cyan);border-style:solid;}
+.scan-frame::before{top:0;left:0;border-width:3px 0 0 3px;}
+.scan-frame::after{top:0;right:0;border-width:3px 3px 0 0;}
+.scan-frame .c1{bottom:0;left:0;border-width:0 0 3px 3px;}
+.scan-frame .c2{bottom:0;right:0;border-width:0 3px 3px 0;}
+.scan-line{position:absolute;left:4px;right:4px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  animation:scl 2s ease-in-out infinite alternate;}
+@keyframes scl{from{top:8px;}to{top:calc(100% - 8px);}}
+.scan-idle{font-family:var(--fm);font-size:11px;color:var(--muted);text-align:center;padding:20px;}
+.scan-result{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
+  padding:12px;margin-bottom:10px;display:none;}
+.scan-result.vis{display:block;}
+.sr-title{font-family:var(--fm);font-size:10px;color:var(--cyan);letter-spacing:2px;margin-bottom:8px;}
+.sr-row{display:flex;gap:8px;margin-bottom:5px;align-items:baseline;}
+.sr-k{font-family:var(--fm);font-size:10px;color:var(--muted);width:55px;flex-shrink:0;}
+.sr-v{font-size:13px;color:var(--text);font-weight:600;word-break:break-all;}
+
+/* ── HISTORY ── */
+.hi{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
+  padding:10px 12px;margin-bottom:7px;cursor:pointer;transition:border-color .2s;position:relative;}
+.hi:hover{border-color:var(--border2);}
+.hi .hid{font-weight:600;font-size:13px;margin-bottom:2px;}
+.hi .hm{font-family:var(--fm);font-size:10px;color:var(--muted);}
+.hi .ht{font-family:var(--fm);font-size:9px;color:var(--muted);margin-top:3px;}
+.hi .hdl{position:absolute;top:9px;right:9px;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;}
+.hi .hdl:hover{color:var(--red);}
+.hbadge{display:inline-block;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);
+  color:var(--cyan);font-family:var(--fm);font-size:9px;padding:1px 6px;border-radius:20px;margin-right:4px;}
+
+/* ── INFO ── */
+.info-box{background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.15);
+  border-radius:var(--rs);padding:10px 12px;margin-bottom:10px;font-size:12px;
+  color:var(--text2);line-height:1.5;}
+.info-box strong{color:var(--text);}
+.warn-box{background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);
+  border-radius:var(--rs);padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--amber);}
+
+/* ── BATCH ── */
+.brow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:6px;background:var(--bg3);
+  border:1px solid var(--border);border-radius:var(--rs);padding:8px 9px;}
+.bnum{font-family:var(--fm);font-size:10px;color:var(--muted);width:16px;flex-shrink:0;}
+.brow input{flex:1 1 calc(50% - 16px);min-width:0;padding:6px 8px;font-size:12px;}
+.brow .rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 4px;flex-shrink:0;}
+.brow .rm:hover{color:var(--red);}
+.add-row-btn{width:100%;padding:8px;background:rgba(0,229,255,0.03);border:1px dashed var(--border2);
+  border-radius:var(--rs);color:var(--text2);font-family:var(--fm);font-size:11px;
+  cursor:pointer;transition:all .2s;margin-bottom:10px;}
+.add-row-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+
+/* ── SINGLE QR DL ── */
+.sqw{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px;
+  background:#fff;border-radius:var(--rs);margin-top:8px;}
+
+/* ── LABEL STYLE TOGGLE ── */
+.style-toggle{display:flex;gap:6px;margin-bottom:6px;}
+.st-btn{flex:1;padding:9px 5px;border:1px solid var(--border);border-radius:var(--rs);
+  background:rgba(0,229,255,0.02);cursor:pointer;text-align:center;transition:all .15s;
+  -webkit-tap-highlight-color:transparent;}
+.st-btn.on{border-color:var(--cyan);background:rgba(0,229,255,0.09);}
+.st-btn .sti{font-size:18px;display:block;margin-bottom:3px;line-height:1;}
+.st-btn .stn{font-family:var(--fm);font-size:10px;font-weight:700;color:var(--text);display:block;}
+.st-btn .std{font-size:9px;color:var(--muted);display:block;margin-top:2px;line-height:1.3;}
+.st-btn.on .stn{color:var(--cyan);}
+
+/* ── EXCEL DOWNLOAD BUTTON ── */
+.excel-wrap{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(29,122,58,0.12),rgba(42,173,85,0.06));
+  border:1px solid rgba(29,122,58,0.35);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;}
+.excel-icon{font-size:1.6rem;flex-shrink:0;}
+.excel-info{flex:1;}
+.excel-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.excel-sub{font-size:11px;color:var(--text2);}
+.excel-btn{background:linear-gradient(135deg,#1d7a3a,#2aad55);border:none;border-radius:var(--rs);
+  padding:9px 14px;color:#fff;font-family:var(--ff);font-weight:700;font-size:12px;
+  cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0;}
+.excel-btn:active{transform:scale(.97);}
+.excel-btn:hover{filter:brightness(1.1);}
+.excel-pro-wrap{display:flex;align-items:center;gap:8px;background:rgba(245,200,66,0.06);
+  border:1px solid rgba(245,200,66,0.2);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;cursor:pointer;}
+.excel-pro-wrap:hover{border-color:rgba(245,200,66,0.4);}
+.excel-lock-icon{font-size:1.4rem;flex-shrink:0;}
+.excel-lock-title{font-size:13px;font-weight:600;color:var(--gold);margin-bottom:2px;}
+.excel-lock-sub{font-size:11px;color:var(--muted);}
+.upgrade-pill{background:linear-gradient(135deg,var(--pro-from),var(--pro-to));color:#1a0a00;font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;flex-shrink:0;}
+
+/* ── THERMAL PRINT SETTINGS ── */
+.thermal-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.thermal-opt{background:var(--bg3);border:2px solid var(--border);border-radius:var(--rs);
+  padding:10px 8px;cursor:pointer;text-align:center;transition:all .15s;}
+.thermal-opt.on{border-color:var(--cyan);background:rgba(0,229,255,0.08);}
+.thermal-opt .to-icon{font-size:20px;display:block;margin-bottom:4px;}
+.thermal-opt .to-name{font-size:11px;font-weight:600;color:var(--text);display:block;}
+.thermal-opt .to-dim{font-size:10px;color:var(--muted);display:block;margin-top:2px;}
+.thermal-opt.on .to-name{color:var(--cyan);}
+.print-preview-box{background:#f5f5f5;border-radius:var(--rs);padding:10px;
+  margin-bottom:12px;min-height:80px;display:flex;align-items:center;justify-content:center;
+  border:1px dashed #ccc;overflow:hidden;}
+.print-preview-inner{background:#fff;display:flex;flex-wrap:wrap;
+  gap:var(--pg);padding:var(--pp);transform-origin:top left;}
+
+/* ── STATUS ── */
+.statusbar{display:flex;align-items:center;justify-content:center;gap:5px;
+  padding:4px 16px calc(4px + var(--sab));background:rgba(6,11,24,0.95);
+  border-top:1px solid var(--border);font-family:var(--fm);font-size:9px;
+  color:var(--muted);letter-spacing:1px;flex-shrink:0;}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sdot.pro{background:var(--gold);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:calc(70px + var(--sab));left:50%;transform:translateX(-50%) translateY(10px);
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);
+  padding:9px 16px;font-size:12px;color:var(--text);z-index:500;opacity:0;
+  transition:all .3s;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+.toast.vis{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.ok{border-color:var(--green);color:var(--green);}
+.toast.gold{border-color:var(--gold);color:var(--gold);}
+.toast.warn{border-color:var(--amber);color:var(--amber);}
+
+@media print{
+  /* Hide absolutely everything on page */
+  html > body > *{display:none!important;}
+  /* Only show print area */
+  #print-area{
+    display:block!important;
+    position:absolute!important;
+    top:0!important;left:0!important;width:100%!important;
+    background:#fff!important;z-index:99999!important;
+  }
+  #print-area .ls-print{display:flex!important;flex-wrap:wrap!important;}
+  #print-area canvas,#print-area img{display:block!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ SPLASH (Netflix-style intro) ══════════ -->
+<div id="splash" style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#ffffff;opacity:1;transition:opacity .5s ease;">
+  <div id="splash-inner" style="display:flex;flex-direction:column;align-items:center;gap:18px;">
+    <div id="splash-logo" style="width:140px;height:140px;border-radius:32px;overflow:hidden;
+         box-shadow:0 24px 80px -20px rgba(0,229,255,0.55), 0 8px 24px -8px rgba(124,58,237,0.35);
+         transform:scale(0.6);opacity:0;animation:splashLogoIn 900ms cubic-bezier(.2,.7,.2,1.05) 100ms forwards;">
+      <img src="icons/icon-512.png" alt="iTubeTag" style="width:100%;height:100%;display:block;"/>
+    </div>
+    <div id="splash-name" style="font-family:'Space Grotesk','Segoe UI',sans-serif;font-weight:700;font-size:2rem;letter-spacing:-1px;
+         background:linear-gradient(135deg,#00e5ff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+         opacity:0;transform:translateY(8px);animation:splashTextIn 700ms ease 700ms forwards;">iTubeTag</div>
+    <div style="font-family:'Space Mono',monospace;font-size:10px;color:#7c3aed;letter-spacing:4px;
+         opacity:0;animation:splashTextIn 700ms ease 1000ms forwards;">SMART  LAB  QR  LABELS</div>
+  </div>
+</div>
+<style>
+  @keyframes splashLogoIn {
+    0%   { transform:scale(0.6) rotate(-8deg); opacity:0; }
+    55%  { transform:scale(1.08) rotate(0deg); opacity:1; }
+    100% { transform:scale(1.0) rotate(0deg);  opacity:1; }
+  }
+  @keyframes splashTextIn {
+    0%   { opacity:0; transform:translateY(8px); }
+    100% { opacity:1; transform:translateY(0);   }
+  }
+  #splash.hide { opacity:0; pointer-events:none; }
+</style>
+<script>
+  (function(){
+    // Subtle "ting" chime — built on the fly with the Web Audio API (no asset to ship).
+    function playTing(){
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        const ctx = new Ctx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        // Crisp two-note "ti-iiing" rise
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.32, ctx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.1);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 1.2);
+      } catch(_){}
+    }
+    // Splash playback runs once on first user gesture OR after small delay
+    const splash = document.getElementById('splash');
+    function dismissSplash(){ splash.classList.add('hide'); setTimeout(()=>splash.remove(), 600); }
+    // Play sound at ~150ms after logo appears
+    setTimeout(playTing, 280);
+    // Stay on splash 2.4s then crossfade out
+    setTimeout(dismissSplash, 2400);
+    // Also dismiss on tap (in case the user is impatient)
+    splash.addEventListener('click', dismissSplash, { once:true });
+    splash.addEventListener('touchstart', dismissSplash, { once:true, passive:true });
+  })();
+</script>
+
+<!-- ══════════ AUTH SCREEN ══════════ -->
+<div id="auth-screen" style="display:flex;flex-direction:column;height:100vh;background:var(--bg);position:relative;z-index:10;align-items:center;justify-content:center;padding:24px;">
+  <div style="text-align:center;max-width:360px;width:100%;">
+    <!-- Logo -->
+    <div style="font-size:3rem;font-weight:700;background:linear-gradient(135deg,#00e5ff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-2px;margin-bottom:6px;">TubeTag</div>
+    <div style="font-family:'Space Mono',monospace;font-size:11px;color:#4a6080;letter-spacing:3px;margin-bottom:32px;">SMART LAB QR LABELS</div>
+
+    <div style="background:#0d1526;border:1px solid #1a2d5a;border-radius:16px;padding:24px 20px;margin-bottom:16px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,#00e5ff,#7c3aed,transparent);"></div>
+      <div style="font-size:13px;color:#8aafd4;line-height:1.7;margin-bottom:20px;">Sign in to sync your labels across devices and unlock <strong style="color:#f5c842;">Pro features</strong>.</div>
+
+      <!-- Google Sign In -->
+      <button class="google-btn" onclick="googleLogin()" style="margin:0 auto 10px;display:flex;">
+        <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+
+      <button class="skip-btn" onclick="skipLogin()" style="display:block;margin:0 auto;">Continue as Guest</button>
+    </div>
+
+    <div style="font-size:11px;color:#2a3a50;line-height:1.6;">
+      Guest: 20 labels/day · Sign in: Unlimited with Pro<br/>
+      <span style="color:#3a5070;">Your data stays on your device</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MAIN APP ══════════ -->
+<div class="app" id="main-app" style="display:none;">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand">TubeTag</div>
+    <div id="plan-badge" class="free-badge" onclick="openModal('upgrade-modal')">FREE</div>
+    <div class="icon-btn-bt" id="bt-topbar-btn" onclick="openModal('bt-modal')" title="Bluetooth Printer">
+      <span id="bt-topbar-icon">📶</span>
+    </div>
+    <div class="user-btn" id="user-btn" onclick="switchTab('profile',null)">
+      <span id="user-initial">G</span>
+    </div>
+  </div>
+
+  <!-- QUOTA BAR -->
+  <div class="quota-bar">
+    <div class="quota-row">
+      <span class="quota-label" id="quota-label">Daily labels</span>
+      <div class="quota-track"><div class="quota-fill" id="quota-fill" style="width:0%"></div></div>
+      <span class="quota-count" id="quota-count">0 / 20</span>
+    </div>
+  </div>
+
+  <!-- TABBAR -->
+  <div class="tabbar">
+    <div class="tab on" onclick="switchTab('lab',this)"><span class="ti">🧪</span>SAMPLE</div>
+    <div class="tab" onclick="switchTab('batch',this)"><span class="ti">📦</span>BATCH</div>
+    <div class="tab" onclick="switchTab('custom',this)"><span class="ti">✏️</span>CUSTOM</div>
+    <div class="tab" onclick="switchTab('scan',this)"><span class="ti">📷</span>SCAN</div>
+    <div class="tab" onclick="switchTab('history',this)"><span class="ti">🕓</span>HISTORY</div>
+    <div class="tab" onclick="switchTab('profile',this)"><span class="ti">👤</span>PROFILE</div>
+  </div>
+
+  <div class="scroll">
+
+    <!-- ══════════ LAB SAMPLE ══════════ -->
+    <div class="screen on" id="screen-lab">
+      <div class="card">
+        <div class="ct">// Sample data</div>
+        <div class="field"><label>Sample ID</label><input type="text" id="sid" placeholder="SMP-2026-001" autocomplete="off"/></div>
+        <div class="row2">
+          <div class="field"><label>Organism</label><input type="text" id="sorg" placeholder="E. coli K12" autocomplete="off"/></div>
+          <div class="field"><label>Gene</label><input type="text" id="sgene" placeholder="16S rRNA" autocomplete="off"/></div>
+        </div>
+        <div class="field">
+          <label>NCBI ID <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;">— GenBank Accession / Taxonomy</span></label>
+          <input type="text" id="sncbi" placeholder="e.g. NC_000913.3  or  txid562" autocomplete="off"/>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ct">// Label style</div>
+        <div class="style-toggle" id="st-lab">
+          <div class="st-btn on" data-st="qr-text" onclick="pickStyle(this,'lab')">
+            <span class="sti">▦ Aa</span><span class="stn">QR + Text</span><span class="std">QR code with sample info</span>
+          </div>
+          <div class="st-btn" data-st="qr-only" onclick="pickStyle(this,'lab')">
+            <span class="sti">▦</span><span class="stn">QR Only</span><span class="std">Just the QR code</span>
+          </div>
+          <div class="st-btn" data-st="text-only" onclick="pickStyle(this,'lab')">
+            <span class="sti">Aa</span><span class="stn">Text Only</span><span class="std">Words, no QR</span>
+          </div>
+        </div>
+
+        <!-- Text customization (shown for qr-text and text-only) -->
+        <div id="text-opts-lab" style="margin-top:10px;">
+          <div class="row2">
+            <div class="field">
+              <label>ID Font Size</label>
+              <select id="lab-fsize-id">
+                <option value="7">Small (7pt)</option>
+                <option value="9" selected>Medium (9pt)</option>
+                <option value="11">Large (11pt)</option>
+                <option value="13">XLarge (13pt)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Detail Font Size</label>
+              <select id="lab-fsize-detail">
+                <option value="5">Tiny (5pt)</option>
+                <option value="6" selected>Small (6pt)</option>
+                <option value="8">Medium (8pt)</option>
+                <option value="10">Large (10pt)</option>
+              </select>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Font Weight</label>
+              <select id="lab-fweight">
+                <option value="400">Normal</option>
+                <option value="700" selected>Bold</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Text Align</label>
+              <select id="lab-align">
+                <option value="left" selected>Left</option>
+                <option value="center">Center</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Label Layout</label>
+            <div style="display:flex;gap:8px;margin-top:4px;">
+              <button type="button" class="orient-btn on" data-orient="horizontal" onclick="pickOrient(this,'lab','horizontal')" style="flex:1;background:rgba(0,229,255,0.15);border:1px solid var(--cyan);color:var(--cyan);padding:8px;border-radius:8px;font-size:11px;font-weight:600;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                <span style="font-size:14px;">▭</span> HORIZONTAL
+              </button>
+              <button type="button" class="orient-btn" data-orient="vertical" onclick="pickOrient(this,'lab','vertical')" style="flex:1;background:#0d1526;border:1px solid #1a2d5a;color:var(--text2);padding:8px;border-radius:8px;font-size:11px;font-weight:600;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                <span style="font-size:14px;">▯</span> VERTICAL
+              </button>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:6px;font-style:italic;">Vertical stacks QR on top with text below — ideal for tall lab tubes.</div>
+          </div>
+          <div class="field">
+            <label>Show Fields</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);text-transform:none;letter-spacing:0;"><input type="checkbox" id="show-id" checked style="width:auto;"/> Sample ID</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);text-transform:none;letter-spacing:0;"><input type="checkbox" id="show-org" checked style="width:auto;"/> Organism</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);text-transform:none;letter-spacing:0;"><input type="checkbox" id="show-gene" checked style="width:auto;"/> Gene</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);text-transform:none;letter-spacing:0;"><input type="checkbox" id="show-ncbi" checked style="width:auto;"/> NCBI ID</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);text-transform:none;letter-spacing:0;"><input type="checkbox" id="show-date" style="width:auto;"/> Date</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ct">// Label size</div>
+        <div class="sz-grid" id="sg-lab">
+          <div class="sz-btn on" data-s="micro" onclick="pickSz(this,'lab')"><span class="sn">MICRO</span><span class="sd">25×10mm</span><span class="sd">0.5mL</span></div>
+          <div class="sz-btn" data-s="small" onclick="pickSz(this,'lab')"><span class="sn">SMALL</span><span class="sd">35×13mm</span><span class="sd">1.5mL</span></div>
+          <div class="sz-btn" data-s="medium" onclick="pickSz(this,'lab')"><span class="sn">MED</span><span class="sd">50×18mm</span><span class="sd">15mL</span></div>
+          <div class="sz-btn locked" data-s="large" onclick="proGate(this,'lab')"><span class="sn">LARGE★</span><span class="sd">70×25mm</span><span class="sd">50mL</span></div>
+          <div class="sz-btn locked" data-s="xlarge" onclick="proGate(this,'lab')"><span class="sn">CRYO★</span><span class="sd">90×35mm</span><span class="sd">Cryo</span></div>
+        </div>
+        <div class="field" style="max-width:100px;"><label>Copies</label><input type="number" id="scp" value="4" min="1" max="20"/></div>
+      </div>
+      <!-- ───── Institute logo (applies to ALL labels, all tabs) ───── -->
+      <div class="card">
+        <div class="ct">// Institute logo (optional)</div>
+        <div id="logo-empty" style="display:flex;align-items:center;gap:10px;padding:14px;background:#0d1526;border:1px dashed #1a2d5a;border-radius:10px;cursor:pointer;" onclick="document.getElementById('logo-file').click()">
+          <div style="font-size:22px;color:var(--cyan);">＋</div>
+          <div style="flex:1;font-size:12px;color:var(--text2);line-height:1.4;">
+            <b style="color:var(--cyan);">Upload your lab/institute logo</b><br/>
+            <span style="font-size:11px;color:var(--muted);">PNG, JPG or SVG · appears on the top-right of every printed label</span>
+          </div>
+        </div>
+        <div id="logo-set" style="display:none;align-items:center;gap:10px;">
+          <img id="logo-thumb" alt="Logo" style="width:64px;height:64px;object-fit:contain;background:#fff;padding:4px;border-radius:8px;border:1px solid #1a2d5a;"/>
+          <div style="flex:1;">
+            <div style="font-size:11px;color:var(--cyan);font-weight:700;letter-spacing:.5px;margin-bottom:6px;">LOGO SIZE</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="range" id="logo-size" min="8" max="36" value="18" oninput="onLogoSizeChange(this.value)" style="flex:1;"/>
+              <span id="logo-size-out" style="font-family:var(--fm);font-size:11px;color:var(--text);min-width:32px;text-align:right;">18px</span>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:4px;">↳ Reflected on every printed label</div>
+          </div>
+          <button class="btn ghost" style="padding:6px 10px;font-size:11px;" onclick="removeLogo()">Remove</button>
+        </div>
+        <input type="file" id="logo-file" accept="image/png,image/jpeg,image/svg+xml,image/webp" style="display:none;" onchange="handleLogoUpload(event)"/>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" onclick="genLab()">⬡ Generate</button>
+        <button class="btn success" id="bpl" onclick="pbt('ls')" disabled>⬡ BT Print</button>
+        <button class="btn ghost" onclick="openPrintModal('ls')">🖨 Print</button>
+      </div>
+      <div class="card" id="sqc" style="display:none;">
+        <div class="ct">// Download single QR</div>
+        <div class="sqw"><div id="sqb"></div>
+        <button class="btn primary" style="margin-top:6px;" onclick="dlQR('sqb','sample')">⬇ Download PNG</button></div>
+      </div>
+      <div class="pw" id="lw"><div class="pt"><span>// LABEL PREVIEW</span><span id="lct"></span></div><div class="ls" id="ls"></div></div>
+    </div>
+
+    <!-- ══════════ BATCH ══════════ -->
+    <div class="screen" id="screen-batch">
+      <div class="card">
+        <div class="ct">// Batch — multiple samples</div>
+        <div class="info-box">Each row = one unique label. All printed on one sheet.</div>
+        <div id="brows"></div>
+        <button class="add-row-btn" onclick="addRow()">+ Add sample row</button>
+      </div>
+
+      <div class="card">
+        <div class="ct">// Label style</div>
+        <div class="style-toggle" id="st-batch">
+          <div class="st-btn on" data-st="qr-text" onclick="pickStyle(this,'batch')">
+            <span class="sti">▦ Aa</span><span class="stn">QR + Text</span><span class="std">QR with sample info</span>
+          </div>
+          <div class="st-btn" data-st="qr-only" onclick="pickStyle(this,'batch')">
+            <span class="sti">▦</span><span class="stn">QR Only</span><span class="std">Just QR code</span>
+          </div>
+          <div class="st-btn" data-st="text-only" onclick="pickStyle(this,'batch')">
+            <span class="sti">Aa</span><span class="stn">Text Only</span><span class="std">Words, no QR</span>
+          </div>
+        </div>
+        <div id="text-opts-batch" style="margin-top:10px;">
+          <div class="row2">
+            <div class="field">
+              <label>ID Font Size</label>
+              <select id="batch-fsize-id">
+                <option value="7">Small (7pt)</option>
+                <option value="9" selected>Medium (9pt)</option>
+                <option value="11">Large (11pt)</option>
+                <option value="13">XLarge (13pt)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Detail Font Size</label>
+              <select id="batch-fsize-detail">
+                <option value="5">Tiny (5pt)</option>
+                <option value="6" selected>Small (6pt)</option>
+                <option value="8">Medium (8pt)</option>
+                <option value="10">Large (10pt)</option>
+              </select>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Font Weight</label>
+              <select id="batch-fweight">
+                <option value="400">Normal</option>
+                <option value="700" selected>Bold</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Text Align</label>
+              <select id="batch-align">
+                <option value="left" selected>Left</option>
+                <option value="center">Center</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Label Layout</label>
+            <div style="display:flex;gap:8px;margin-top:4px;">
+              <button type="button" class="orient-btn on" data-orient="horizontal" onclick="pickOrient(this,'batch','horizontal')" style="flex:1;background:rgba(0,229,255,0.15);border:1px solid var(--cyan);color:var(--cyan);padding:8px;border-radius:8px;font-size:11px;font-weight:600;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                <span style="font-size:14px;">▭</span> HORIZONTAL
+              </button>
+              <button type="button" class="orient-btn" data-orient="vertical" onclick="pickOrient(this,'batch','vertical')" style="flex:1;background:#0d1526;border:1px solid #1a2d5a;color:var(--text2);padding:8px;border-radius:8px;font-size:11px;font-weight:600;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                <span style="font-size:14px;">▯</span> VERTICAL
+              </button>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:6px;font-style:italic;">Vertical = QR on top, text below. Ideal for tall lab tubes.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ct">// Label size</div>
+        <div class="sz-grid" id="sg-batch">
+          <div class="sz-btn on" data-s="micro" onclick="pickSz(this,'batch')"><span class="sn">MICRO</span><span class="sd">25×10mm</span></div>
+          <div class="sz-btn" data-s="small" onclick="pickSz(this,'batch')"><span class="sn">SMALL</span><span class="sd">35×13mm</span></div>
+          <div class="sz-btn" data-s="medium" onclick="pickSz(this,'batch')"><span class="sn">MED</span><span class="sd">50×18mm</span></div>
+          <div class="sz-btn locked" data-s="large" onclick="proGate(this,'batch')"><span class="sn">LARGE★</span><span class="sd">70×25mm</span></div>
+          <div class="sz-btn locked" data-s="xlarge" onclick="proGate(this,'batch')"><span class="sn">CRYO★</span><span class="sd">90×35mm</span></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Copies each</label><input type="number" id="bcp" value="2" min="1" max="8"/></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" onclick="genBatch()">⬡ Generate all</button>
+        <button class="btn success" id="bpb" onclick="pbt('bs')" disabled>⬡ BT Print</button>
+        <button class="btn ghost" onclick="openPrintModal('bs')">🖨 Print</button>
+      </div>
+
+      <!-- Excel Download — Pro only -->
+      <div id="excel-pro-gate" class="excel-pro-wrap" onclick="openModal('upgrade-modal')">
+        <span class="excel-lock-icon">📊</span>
+        <div style="flex:1;">
+          <div class="excel-lock-title">Download as Excel</div>
+          <div class="excel-lock-sub">Export all batch data to .xlsx spreadsheet</div>
+        </div>
+        <span class="upgrade-pill">★ PRO</span>
+      </div>
+      <div id="excel-pro-btn" class="excel-wrap" style="display:none;">
+        <span class="excel-icon">📊</span>
+        <div class="excel-info">
+          <div class="excel-title">Download Excel File</div>
+          <div class="excel-sub">All batch data exported as .xlsx</div>
+        </div>
+        <button class="excel-btn" onclick="downloadExcel()">⬇ Excel</button>
+      </div>
+
+      <div class="pw" id="bw"><div class="pt"><span>// BATCH PREVIEW</span><span id="bct2"></span></div><div class="ls" id="bs"></div></div>
+    </div>
+
+    <!-- ══════════ CUSTOM ══════════ -->
+    <div class="screen" id="screen-custom">
+      <div class="card">
+        <div class="ct">// Enter anything</div>
+        <div class="field"><label>Text / URL / any data</label>
+        <textarea id="ctxt" placeholder="Type anything…&#10;https://your-lab.com&#10;Batch B7 · −80°C · 2026-05-03&#10;Patient 042 · Sample A"></textarea></div>
+      </div>
+
+      <div class="card">
+        <div class="ct">// Label style</div>
+        <div class="style-toggle" id="st-custom">
+          <div class="st-btn on" data-st="qr-text" onclick="pickStyle(this,'custom')">
+            <span class="sti">▦ Aa</span><span class="stn">QR + Text</span><span class="std">QR with text below</span>
+          </div>
+          <div class="st-btn" data-st="qr-only" onclick="pickStyle(this,'custom')">
+            <span class="sti">▦</span><span class="stn">QR Only</span><span class="std">Just QR code</span>
+          </div>
+          <div class="st-btn" data-st="text-only" onclick="pickStyle(this,'custom')">
+            <span class="sti">Aa</span><span class="stn">Text Only</span><span class="std">Words, no QR</span>
+          </div>
+        </div>
+        <div id="text-opts-custom" style="margin-top:10px;">
+          <div class="row2">
+            <div class="field">
+              <label>Font Size</label>
+              <select id="custom-fsize">
+                <option value="7">Small (7pt)</option>
+                <option value="9">Medium (9pt)</option>
+                <option value="11" selected>Large (11pt)</option>
+                <option value="14">XLarge (14pt)</option>
+                <option value="18">XXL (18pt)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Font Weight</label>
+              <select id="custom-fweight">
+                <option value="400">Normal</option>
+                <option value="700" selected>Bold</option>
+              </select>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Text Align</label>
+              <select id="custom-align">
+                <option value="left">Left</option>
+                <option value="center" selected>Center</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Text Color</label>
+              <select id="custom-color">
+                <option value="#000000" selected>Black</option>
+                <option value="#1a1a6e">Navy</option>
+                <option value="#8b0000">Dark Red</option>
+                <option value="#006400">Dark Green</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ct">// Label size</div>
+        <div class="sz-grid" id="sg-custom">
+          <div class="sz-btn on" data-s="micro" onclick="pickSz(this,'custom')"><span class="sn">MICRO</span><span class="sd">25×10mm</span></div>
+          <div class="sz-btn" data-s="small" onclick="pickSz(this,'custom')"><span class="sn">SMALL</span><span class="sd">35×13mm</span></div>
+          <div class="sz-btn" data-s="medium" onclick="pickSz(this,'custom')"><span class="sn">MED</span><span class="sd">50×18mm</span></div>
+          <div class="sz-btn locked" data-s="large" onclick="proGate(this,'custom')"><span class="sn">LARGE★</span><span class="sd">70×25mm</span></div>
+          <div class="sz-btn locked" data-s="xlarge" onclick="proGate(this,'custom')"><span class="sn">CRYO★</span><span class="sd">90×35mm</span></div>
+        </div>
+        <div class="field" style="max-width:100px;"><label>Copies</label><input type="number" id="ccp" value="4" min="1" max="20"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" onclick="genCustom()">⬡ Generate</button>
+        <button class="btn success" id="bpc" onclick="pbt('cs')" disabled>⬡ BT Print</button>
+        <button class="btn ghost" onclick="openPrintModal('cs')">🖨 Print</button>
+      </div>
+      <div class="card" id="cdlc" style="display:none;">
+        <div class="ct">// Download single QR</div>
+        <div class="sqw"><div id="csqb"></div>
+        <button class="btn primary" style="margin-top:6px;" onclick="dlQR('csqb','custom')">⬇ Download PNG</button></div>
+      </div>
+      <div class="pw" id="cw"><div class="pt"><span>// PREVIEW</span><span id="cct"></span></div><div class="ls" id="cs"></div></div>
+    </div>
+
+    <!-- ══════════ SCAN ══════════ -->
+    <div class="screen" id="screen-scan">
+      <div class="card">
+        <div class="ct">// Scan QR code</div>
+        <div class="scan-box" id="scan-box">
+          <div class="scan-idle" id="sidle">Tap <strong>Start scanning</strong><br/>to activate camera</div>
+          <video class="scan-video" id="sv" autoplay playsinline style="display:none;"></video>
+          <div class="scan-overlay" id="sovr" style="display:none;">
+            <div class="scan-frame"><div class="c1"></div><div class="c2"></div><div class="scan-line"></div></div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" id="ssb" onclick="startScan()">📷 Start scanning</button>
+          <button class="btn ghost" id="sstb" onclick="stopScan()" style="display:none;">⏹ Stop</button>
+        </div>
+      </div>
+      <div class="scan-result" id="srbox">
+        <div class="sr-title">// SCAN RESULT</div>
+        <div id="src2"></div><div style="font-family:var(--fm);font-size:10px;color:var(--muted);margin-top:6px;word-break:break-all;" id="srraw"></div>
+      </div>
+      <div class="info-box">Works with any QR code. Requires camera permission. Use Chrome on Android.</div>
+    </div>
+
+    <!-- ══════════ HISTORY ══════════ -->
+    <div class="screen" id="screen-history">
+      <div class="card">
+        <div class="ct">// Sample history</div>
+        <div class="field" style="margin-bottom:10px;"><input type="text" id="hsrch" placeholder="Search ID, organism, gene…" oninput="renderHist()"/></div>
+        <div id="hlist"></div>
+      </div>
+      <div class="btn-row"><button class="btn danger" onclick="clrHist()">🗑 Clear all</button></div>
+    </div>
+
+    <!-- ══════════ PROFILE ══════════ -->
+    <div class="screen" id="screen-profile">
+      <div class="card" style="text-align:center;padding:20px;">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--purple));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#060b18;margin:0 auto 10px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;position:relative;" id="prof-avatar" onclick="handleAvatarTap(event)" title="">G</div>
+        <div style="font-size:1.1rem;font-weight:700;margin-bottom:2px;" id="prof-name">Guest User</div>
+        <div style="font-family:var(--fm);font-size:10px;color:var(--muted);margin-bottom:12px;" id="prof-email">Not signed in</div>
+        <div id="plan-status-badge" style="display:inline-block;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:var(--green);font-size:11px;padding:3px 12px;border-radius:20px;">FREE PLAN</div>
+      </div>
+
+      <!-- ═════════ HIDDEN DEVELOPER / REVIEWER PANEL ═════════
+           Unlocked by tapping the profile avatar 4 times within 3 seconds. -->
+      <div class="card" id="dev-panel" style="display:none;background:linear-gradient(135deg,rgba(255,107,138,0.05),rgba(245,200,66,0.05));border:1px solid rgba(245,200,66,0.25);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div>
+            <div style="font-family:var(--fm);font-size:10px;color:var(--gold);letter-spacing:2px;">// DEVELOPER &amp; REVIEWER</div>
+            <div style="font-size:13px;color:var(--text);font-weight:600;margin-top:2px;">Demo Mode</div>
+          </div>
+          <button onclick="document.getElementById('dev-panel').style.display='none';localStorage.removeItem('tt_dev_unlock');" style="background:transparent;border:1px solid #1a2d5a;color:var(--text2);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;">Hide</button>
+        </div>
+        <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;background:#0d1526;border-radius:10px;cursor:pointer;user-select:none;">
+          <div style="flex:1;">
+            <div style="font-size:13px;color:var(--text);font-weight:600;">Enable Demo Mode</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4;">Print and Bluetooth buttons will show a confirmation popup instead of attempting to actually print. Useful for Play Store reviewers who don't have a Bluetooth printer.</div>
+          </div>
+          <input type="checkbox" id="demoModeToggle" onchange="toggleDemoMode(this.checked)" style="width:46px;height:24px;cursor:pointer;flex-shrink:0;"/>
+        </label>
+        <div style="font-size:10px;color:var(--muted);margin-top:10px;font-family:var(--fm);letter-spacing:.5px;">↳ Tip: tap any avatar (top-right circle or profile) 3× to toggle this panel.</div>
+      </div>
+
+      <!-- Plan comparison — HIDDEN during FREE_MODE launch. Will reappear once monetization is enabled. -->
+      <div class="card" id="plans-card" style="display:none;">
+        <div class="ct">// Plans</div>
+        <div class="pricing-grid">
+          <div class="price-card">
+            <div class="pc-name">Free</div>
+            <div class="pc-price">₹0<small>/mo</small></div>
+            <ul class="pc-features">
+              <li class="yes">20 labels/day</li>
+              <li class="yes">MICRO, SMALL, MED</li>
+              <li class="yes">Batch (5 rows)</li>
+              <li class="yes">QR Scanner</li>
+              <li class="no">LARGE & CRYO sizes</li>
+              <li class="no">Unlimited labels</li>
+              <li class="no">Cloud backup</li>
+              <li class="no">Team access</li>
+            </ul>
+          </div>
+          <div class="price-card featured">
+            <div style="background:linear-gradient(135deg,var(--pro-from),var(--pro-to));color:#1a0a00;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block;margin-bottom:8px;">PRO</div>
+            <div class="pc-name">Pro</div>
+            <div class="pc-price">₹150<small>/mo</small></div>
+            <ul class="pc-features">
+              <li class="pro-only">Unlimited labels</li>
+              <li class="pro-only">All 5 label sizes</li>
+              <li class="pro-only">Unlimited batch</li>
+              <li class="pro-only">Cloud backup</li>
+              <li class="pro-only">Priority support</li>
+              <li class="pro-only">Custom templates</li>
+              <li class="pro-only">Team accounts</li>
+              <li class="pro-only">No ads ever</li>
+            </ul>
+            <button class="btn pro full" onclick="openModal('upgrade-modal')">Upgrade to Pro</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🌟 LAUNCH BANNER — shown while FREE_MODE is on -->
+      <div class="card" id="launch-banner" style="background:linear-gradient(135deg,rgba(0,229,255,0.07),rgba(124,58,237,0.07));border:1px solid rgba(0,229,255,0.25);padding:18px;">
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="font-size:30px;line-height:1;">✦</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:var(--cyan);letter-spacing:.5px;margin-bottom:4px;">EARLY-ACCESS LAUNCH</div>
+            <div style="font-size:14px;color:var(--text);line-height:1.5;margin-bottom:6px;">Every feature is currently <b>FREE</b> while we onboard the first labs. Unlimited labels, all sizes, batch printing, scanner — everything unlocked.</div>
+            <div style="font-size:11px;color:var(--muted);font-family:var(--fm);">Thanks for being among the first to use TubeTag. ✨</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ct">// Stats today</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div style="text-align:center;background:var(--bg3);border-radius:var(--rs);padding:10px;">
+            <div style="font-size:1.3rem;font-weight:700;color:var(--cyan);" id="stat-today">0</div>
+            <div style="font-size:10px;color:var(--muted);">Today</div>
+          </div>
+          <div style="text-align:center;background:var(--bg3);border-radius:var(--rs);padding:10px;">
+            <div style="font-size:1.3rem;font-weight:700;color:var(--purple);" id="stat-total">0</div>
+            <div style="font-size:10px;color:var(--muted);">Total</div>
+          </div>
+          <div style="text-align:center;background:var(--bg3);border-radius:var(--rs);padding:10px;">
+            <div style="font-size:1.3rem;font-weight:700;color:var(--green);" id="stat-hist">0</div>
+            <div style="font-size:10px;color:var(--muted);">Saved</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn ghost" onclick="showToast('Settings coming soon','')">⚙️ Settings</button>
+        <button class="btn danger" onclick="logout()">🚪 Log Out</button>
+      </div>
+    </div>
+
+  </div>
+  <div class="statusbar"><span class="sdot" id="status-dot"></span><span id="status-text">TUBETAG · FREE PLAN · OFFLINE READY</span></div>
+</div>
+
+<!-- ══════ PRINT SETTINGS MODAL ══════ -->
+<div class="modal-overlay" id="print-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('print-modal')">×</button>
+    <div class="modal-title">🖨 Print Settings</div>
+    <div class="modal-sub">CHOOSE PRINTER TYPE & PAPER</div>
+
+    <!-- Printer type -->
+    <div style="font-family:var(--fm);font-size:10px;color:var(--cyan);letter-spacing:2px;margin-bottom:8px;">// PRINTER TYPE</div>
+    <div class="thermal-grid" style="grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px;">
+      <div class="thermal-opt on" data-pt="standard" onclick="selectPrinter(this)">
+        <span class="to-icon">🖨️</span>
+        <span class="to-name">Standard</span>
+        <span class="to-dim">A4 / Letter</span>
+      </div>
+      <div class="thermal-opt" data-pt="thermal58" onclick="selectPrinter(this)">
+        <span class="to-icon">🧾</span>
+        <span class="to-name">Thermal 58mm</span>
+        <span class="to-dim">Mini printer</span>
+      </div>
+      <div class="thermal-opt" data-pt="thermal80" onclick="selectPrinter(this)">
+        <span class="to-icon">🧾</span>
+        <span class="to-name">Thermal 80mm</span>
+        <span class="to-dim">POS printer</span>
+      </div>
+    </div>
+
+    <!-- Paper / Label size options -->
+    <div style="font-family:var(--fm);font-size:10px;color:var(--cyan);letter-spacing:2px;margin-bottom:8px;">// PAPER SIZE</div>
+    <div class="thermal-grid" id="paper-opts" style="margin-bottom:14px;">
+      <div class="thermal-opt on" data-paper="a4" onclick="selectPaper(this)">
+        <span class="to-icon">📄</span>
+        <span class="to-name">A4</span>
+        <span class="to-dim">210 × 297mm</span>
+      </div>
+      <div class="thermal-opt" data-paper="letter" onclick="selectPaper(this)">
+        <span class="to-icon">📄</span>
+        <span class="to-name">Letter</span>
+        <span class="to-dim">216 × 279mm</span>
+      </div>
+      <div class="thermal-opt" data-paper="a5" onclick="selectPaper(this)">
+        <span class="to-icon">📄</span>
+        <span class="to-name">A5</span>
+        <span class="to-dim">148 × 210mm</span>
+      </div>
+      <div class="thermal-opt" data-paper="roll58" onclick="selectPaper(this)" style="display:none;">
+        <span class="to-icon">🧻</span>
+        <span class="to-name">58mm Roll</span>
+        <span class="to-dim">Continuous</span>
+      </div>
+      <div class="thermal-opt" data-paper="roll80" onclick="selectPaper(this)" style="display:none;">
+        <span class="to-icon">🧻</span>
+        <span class="to-name">80mm Roll</span>
+        <span class="to-dim">Continuous</span>
+      </div>
+    </div>
+
+    <!-- Layout settings -->
+    <div style="font-family:var(--fm);font-size:10px;color:var(--cyan);letter-spacing:2px;margin-bottom:8px;">// LAYOUT</div>
+    <div class="row2" style="margin-bottom:12px;">
+      <div>
+        <label style="font-family:var(--fm);font-size:10px;color:var(--text2);display:block;margin-bottom:4px;">COLUMNS</label>
+        <select id="print-cols" onchange="updatePrintPreview()">
+          <option value="1">1 column</option>
+          <option value="2" selected>2 columns</option>
+          <option value="3">3 columns</option>
+          <option value="4">4 columns</option>
+          <option value="auto">Auto fit</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-family:var(--fm);font-size:10px;color:var(--text2);display:block;margin-bottom:4px;">GAP (mm)</label>
+        <select id="print-gap" onchange="updatePrintPreview()">
+          <option value="1">1 mm</option>
+          <option value="2" selected>2 mm</option>
+          <option value="3">3 mm</option>
+          <option value="5">5 mm</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row2" style="margin-bottom:12px;">
+      <div>
+        <label style="font-family:var(--fm);font-size:10px;color:var(--text2);display:block;margin-bottom:4px;">MARGIN (mm)</label>
+        <select id="print-margin" onchange="updatePrintPreview()">
+          <option value="3">3 mm</option>
+          <option value="5" selected>5 mm</option>
+          <option value="8">8 mm</option>
+          <option value="10">10 mm</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-family:var(--fm);font-size:10px;color:var(--text2);display:block;margin-bottom:4px;">BORDER</label>
+        <select id="print-border" onchange="updatePrintPreview()">
+          <option value="0.5px solid #ccc" selected>Light</option>
+          <option value="1px solid #888">Medium</option>
+          <option value="2px solid #000">Bold</option>
+          <option value="none">None</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Thermal specific settings -->
+    <div id="thermal-opts-section" style="display:none;">
+      <div style="font-family:var(--fm);font-size:10px;color:var(--cyan);letter-spacing:2px;margin-bottom:8px;">// THERMAL SETTINGS</div>
+      <div class="info-box" style="margin-bottom:10px;">
+        🧾 For <strong>Xprinter, GOOJPRT, HOIN, Rongta</strong> thermal printers.<br/>
+        Set your printer width to <strong id="thermal-width-hint">58mm</strong> in printer settings.
+      </div>
+      <div class="row2" style="margin-bottom:12px;">
+        <div>
+          <label style="font-family:var(--fm);font-size:10px;color:var(--text2);display:block;margin-bottom:4px;">LABEL HEIGHT</label>
+          <select id="thermal-height">
+            <option value="15mm">15 mm</option>
+            <option value="20mm" selected>20 mm</option>
+            <option value="25mm">25 mm</option>
+            <option value="30mm">30 mm</option>
+            <option value="40mm">40 mm</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-family:var(--fm);font-size:10px;color:var(--text2);display:block;margin-bottom:4px;">DARKNESS</label>
+          <select id="thermal-dark">
+            <option value="normal" selected>Normal</option>
+            <option value="dark">Dark</option>
+            <option value="very-dark">Very Dark</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <input type="checkbox" id="thermal-cut" checked style="width:auto;"/>
+        <label for="thermal-cut" style="font-size:12px;color:var(--text2);">Auto-cut between labels</label>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <input type="checkbox" id="thermal-bw" checked style="width:auto;"/>
+        <label for="thermal-bw" style="font-size:12px;color:var(--text2);">Force black & white (saves ink)</label>
+      </div>
+    </div>
+
+    <!-- Centering option (useful for LARGE / CRYO labels on full A4 sheets) -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:10px 12px;background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.18);border-radius:10px;">
+      <input type="checkbox" id="print-center" onchange="updatePrintPreview()" style="width:auto;"/>
+      <label for="print-center" style="flex:1;font-size:12px;color:var(--text2);cursor:pointer;line-height:1.4;">
+        <b style="color:var(--cyan);">Center labels on page</b><br/>
+        <span style="font-size:11px;color:var(--muted);">Recommended for LARGE / CRYO sizes when you only need one label per page.</span>
+      </label>
+    </div>
+
+    <!-- Live mini preview -->
+    <div style="font-family:var(--fm);font-size:10px;color:var(--cyan);letter-spacing:2px;margin-bottom:8px;">// PRINT PREVIEW</div>
+    <div class="print-preview-box" id="print-preview-box">
+      <div style="font-size:12px;color:#aaa;font-family:monospace;">Generate labels first to preview</div>
+    </div>
+
+    <!-- Print buttons -->
+    <div class="btn-row" style="margin-bottom:0;">
+      <button class="btn primary" style="font-size:13px;padding:12px;" onclick="executePrint()">🖨 Print Now</button>
+      <button class="btn ghost" onclick="closeModal('print-modal')">Cancel</button>
+    </div>
+    <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--muted);">
+      Tip: Set browser print margins to <strong>None</strong> for best results
+    </div>
+  </div>
+</div>
+
+<!-- ══════ UPGRADE MODAL ══════ -->
+<div class="modal-overlay" id="upgrade-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('upgrade-modal')">×</button>
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:2rem;margin-bottom:6px;">⭐</div>
+      <div class="modal-title">Upgrade to Pro</div>
+      <div style="font-family:var(--fm);font-size:2rem;font-weight:700;color:var(--gold);margin:8px 0 2px;">₹150<span style="font-size:13px;color:var(--muted);font-weight:400;">/month</span></div>
+      <div style="font-size:12px;color:var(--text2);">Try weekly ₹10  ·  Annual ₹1,000/year (save ₹800)</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">
+      <div style="background:var(--bg3);border-radius:var(--rs);padding:10px;font-size:11px;color:var(--text2);">★ Unlimited labels</div>
+      <div style="background:var(--bg3);border-radius:var(--rs);padding:10px;font-size:11px;color:var(--text2);">★ All 5 label sizes</div>
+      <div style="background:var(--bg3);border-radius:var(--rs);padding:10px;font-size:11px;color:var(--text2);">★ Unlimited batch</div>
+      <div style="background:var(--bg3);border-radius:var(--rs);padding:10px;font-size:11px;color:var(--text2);">★ Cloud backup</div>
+      <div style="background:var(--bg3);border-radius:var(--rs);padding:10px;font-size:11px;color:var(--text2);">★ Team accounts</div>
+      <div style="background:var(--bg3);border-radius:var(--rs);padding:10px;font-size:11px;color:var(--text2);">★ Priority support</div>
+    </div>
+
+    <div class="rzp-badge">🔒 Powered by Razorpay · 100% Secure Payment</div>
+
+    <!-- Plan toggle -->
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div id="plan-weekly" class="pay-m" style="flex:1;position:relative;" onclick="selectPlan('weekly')">
+        <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--cyan);color:#060b18;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;">TRY IT</div>
+        <div class="pmn">Weekly</div>
+        <div style="font-family:var(--fm);font-size:1.1rem;color:var(--gold);font-weight:700;">₹10</div>
+        <div class="pms">per week</div>
+      </div>
+      <div id="plan-monthly" class="pay-m on" style="flex:1;" onclick="selectPlan('monthly')">
+        <div class="pmn">Monthly</div>
+        <div style="font-family:var(--fm);font-size:1.1rem;color:var(--gold);font-weight:700;">₹150</div>
+        <div class="pms">per month</div>
+      </div>
+      <div id="plan-annual" class="pay-m" style="flex:1;position:relative;" onclick="selectPlan('annual')">
+        <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--green);color:#060b18;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;">SAVE ₹800</div>
+        <div class="pmn">Annual</div>
+        <div style="font-family:var(--fm);font-size:1.1rem;color:var(--gold);font-weight:700;">₹1,000</div>
+        <div class="pms">per year</div>
+      </div>
+    </div>
+
+    <!-- Payment methods -->
+    <div class="ct" style="margin-bottom:8px;">// Payment method</div>
+    <div class="pay-methods">
+      <div class="pay-m on" onclick="selPay(this,'upi')"><div class="pmi">📲</div><div class="pmn">UPI</div><div class="pms">GPay · PhonePe · Paytm</div></div>
+      <div class="pay-m" onclick="selPay(this,'card')"><div class="pmi">💳</div><div class="pmn">Card</div><div class="pms">Debit / Credit</div></div>
+      <div class="pay-m" onclick="selPay(this,'netbanking')"><div class="pmi">🏦</div><div class="pmn">Net Banking</div><div class="pms">All banks</div></div>
+      <div class="pay-m" onclick="selPay(this,'wallet')"><div class="pmi">👛</div><div class="pmn">Wallet</div><div class="pms">Paytm · MobiKwik</div></div>
+    </div>
+
+    <!-- Payment method picker — only informational. Razorpay's checkout popup handles the actual entry. -->
+    <div class="info-box" style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.18);padding:12px;border-radius:10px;display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+      <span style="font-size:22px;">🔒</span>
+      <div style="flex:1;font-size:12px;line-height:1.5;">
+        Tap <b style="color:var(--cyan);">Pay &amp; Activate Pro</b> below — a secure Razorpay window will open where you can pay using <b>UPI, Card, Netbanking or Wallets</b>.
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>Order summary:</strong> TubeTag Pro · <span id="pay-plan-label">Monthly ₹150</span><br/>
+      Cancel anytime. Instant activation after payment.
+    </div>
+
+    <button class="btn pro full" style="padding:13px;font-size:14px;" onclick="processPay()">
+      🔒 Pay & Activate Pro
+    </button>
+    <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--muted);">Cancel anytime · Secure · No hidden charges</div>
+  </div>
+</div>
+
+<!-- BT MODAL -->
+<div class="modal-overlay" id="bt-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('bt-modal')">×</button>
+    <div class="modal-title">Bluetooth Printer</div>
+    <div class="modal-sub" id="btsub">SCAN FOR NEARBY DEVICES</div>
+    <div id="bt-conn-info" style="display:none;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.25);border-radius:var(--rs);">
+        <span style="font-size:1.4rem;">🖨️</span>
+        <div><div style="font-weight:600;color:var(--green);" id="bt-dev-name">Printer</div>
+        <div style="font-size:10px;color:var(--muted);">Connected · Ready</div></div>
+      </div>
+    </div>
+    <div class="info-box">Works with <strong>Niimbot</strong>, <strong>Brother P-touch</strong>, <strong>DYMO</strong>. Requires <strong>Chrome</strong>.</div>
+    <div class="btn-row" style="margin:0;">
+      <button class="btn primary" id="bt-conn-btn" onclick="connBT()">Scan & Connect</button>
+      <button class="btn danger" id="bt-disc-btn" onclick="discBT()" style="display:none;">Disconnect</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SUCCESS MODAL ══════ -->
+<!-- ══════════ TRACKING MODAL (lifecycle + location + temperature) ══════════ -->
+<div class="modal-overlay" id="track-modal">
+  <div class="modal" style="max-height:85vh;overflow-y:auto;">
+    <div class="modal-handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:var(--fm);font-size:10px;color:var(--cyan);letter-spacing:2px;">// TRACKING</div>
+        <div class="modal-title" style="font-size:1.2rem;margin-top:2px;word-break:break-all;" id="tk-sample-id">SAMPLE</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;"><span id="tk-org">—</span> · <span id="tk-gene">—</span></div>
+      </div>
+      <button class="btn ghost" style="padding:6px 10px;font-size:13px;flex-shrink:0;" onclick="closeModal('track-modal')">✕</button>
+    </div>
+
+    <!-- Status -->
+    <div class="field"><label>Lifecycle status</label>
+      <select id="tk-status">
+        <option value="created">✦ Created</option>
+        <option value="active">🟢 Active</option>
+        <option value="in_use">🟡 In Use</option>
+        <option value="used">🟣 Used</option>
+        <option value="disposed">⚪ Disposed</option>
+      </select>
+    </div>
+
+    <!-- Location -->
+    <div class="field">
+      <label>Location</label>
+      <div class="row2">
+        <input type="text" id="tk-room"    placeholder="Room / Lab"     autocomplete="off"/>
+        <input type="text" id="tk-freezer" placeholder="Freezer / Shelf" autocomplete="off"/>
+      </div>
+      <div class="row2" style="margin-top:6px;">
+        <input type="text" id="tk-rack"     placeholder="Rack / Box"    autocomplete="off"/>
+        <input type="text" id="tk-position" placeholder="Position / Slot" autocomplete="off"/>
+      </div>
+    </div>
+
+    <!-- Temperature -->
+    <div class="field"><label>Storage temperature</label>
+      <select id="tk-temp">
+        <option value="">— Select temperature —</option>
+        <option value="-80°C">❄❄❄ -80°C (ultra-low freezer)</option>
+        <option value="-20°C">❄❄  -20°C (standard freezer)</option>
+        <option value="+4°C">❄  +4°C (refrigerator)</option>
+        <option value="RT">☀  Room Temperature</option>
+      </select>
+    </div>
+
+    <!-- Note -->
+    <div class="field"><label>Add note <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;">(optional, e.g. "transferred to project Apoptosis")</span></label>
+      <input type="text" id="tk-note" placeholder="Quick note for the activity log" autocomplete="off"/>
+    </div>
+
+    <button class="btn primary full" style="margin-bottom:14px;" onclick="saveTrackChanges()">⌖ Save tracking</button>
+
+    <!-- Activity log -->
+    <div style="font-family:var(--fm);font-size:10px;color:var(--cyan);letter-spacing:2px;margin-bottom:8px;">// ACTIVITY LOG</div>
+    <div id="tk-events" style="background:#0d1526;border-radius:10px;padding:6px 12px;max-height:200px;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="success-modal">
+  <div class="modal" style="text-align:center;">
+    <div class="modal-handle"></div>
+    <div style="font-size:3rem;margin-bottom:12px;">🎉</div>
+    <div class="modal-title" style="font-size:1.3rem;margin-bottom:6px;">Welcome to Pro!</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6;">
+      Your payment was successful.<br/>
+      All Pro features are now unlocked.
+    </div>
+
+    <!-- What's unlocked -->
+    <div style="background:linear-gradient(135deg,rgba(245,200,66,0.08),rgba(255,107,138,0.06));border:1px solid rgba(245,200,66,0.25);border-radius:var(--r);padding:14px;margin-bottom:16px;text-align:left;">
+      <div style="font-family:var(--fm);font-size:10px;color:var(--gold);letter-spacing:2px;margin-bottom:10px;">// UNLOCKED FOR YOU</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div style="font-size:11px;color:var(--text2);">✅ Unlimited labels</div>
+        <div style="font-size:11px;color:var(--text2);">✅ All 5 label sizes</div>
+        <div style="font-size:11px;color:var(--text2);">✅ Unlimited batch</div>
+        <div style="font-size:11px;color:var(--text2);">✅ Cloud backup</div>
+        <div style="font-size:11px;color:var(--text2);">✅ Team accounts</div>
+        <div style="font-size:11px;color:var(--text2);">✅ Priority support</div>
+      </div>
+    </div>
+
+    <!-- Payment ID -->
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:10px;margin-bottom:16px;">
+      <div style="font-family:var(--fm);font-size:10px;color:var(--muted);margin-bottom:4px;">PAYMENT REFERENCE</div>
+      <div style="font-family:var(--fm);font-size:11px;color:var(--cyan);word-break:break-all;" id="success-pay-id">—</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">Save this for your records</div>
+    </div>
+
+    <button class="btn pro full" style="padding:12px;" onclick="closeModal('success-modal');switchTab('lab',null);">
+      🚀 Start Using Pro
+    </button>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted);">
+      Receipt sent to <span id="success-email">your email</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PRO STATUS MODAL ══════ -->
+<div class="modal-overlay" id="pro-status-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('pro-status-modal')">×</button>
+    <div class="modal-title">Your Pro Plan</div>
+    <div style="background:linear-gradient(135deg,rgba(245,200,66,0.08),rgba(255,107,138,0.06));border:1px solid rgba(245,200,66,0.25);border-radius:var(--r);padding:14px;margin-bottom:12px;">
+      <div style="font-family:var(--fm);font-size:10px;color:var(--gold);letter-spacing:2px;margin-bottom:8px;">// PLAN DETAILS</div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+        <span style="color:var(--text2);">Plan</span>
+        <span style="font-weight:600;" id="ps-plan">Pro Monthly</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+        <span style="color:var(--text2);">Activated</span>
+        <span id="ps-date">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;">
+        <span style="color:var(--text2);">Payment ID</span>
+        <span style="font-family:var(--fm);font-size:11px;color:var(--cyan);" id="ps-payid">—</span>
+      </div>
+    </div>
+    <button class="btn danger full" onclick="cancelPro()">Cancel Pro Plan</button>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted);text-align:center;">
+      To cancel, email support@tubetag.app with your payment ID
+    </div>
+  </div>
+</div>
+
+<!-- PRINT AREA -->
+<div id="print-area" style="display:none;"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONFIG ──────────────────────────────────────
+const FREE_LIMIT = 20;
+const FREE_SIZES = ['micro','small','medium'];
+const PRO_PRICE_WEEKLY = 10;
+const PRO_PRICE_MONTHLY = 150;
+const PRO_PRICE_ANNUAL = 1000;
+
+// ─── State ───────────────────────────────────────
+let user = JSON.parse(localStorage.getItem('tt_user')||'null');
+// ─── Monetization flag ────────────────────────────
+// 🌟 FREE LAUNCH MODE: every user gets full Pro access for free.
+// To re-enable paywall later, set FREE_MODE = false (and the original gating returns).
+const FREE_MODE = true;
+let isPro = FREE_MODE ? true : (localStorage.getItem('tt_pro')==='true');
+
+// ─── HIDDEN DEMO MODE (for Play Store reviewers / demos) ───
+//   The topbar avatar OR the profile avatar can be tapped 3 times
+//   within 5 seconds to reveal the Developer panel where reviewers
+//   can toggle Demo Mode.
+function inDemoMode(){ return localStorage.getItem('tt_demo_mode') === '1'; }
+
+let _avTaps = 0, _avTimer = null;
+function handleAvatarTap(ev){
+  if(ev && ev.stopPropagation) ev.stopPropagation();
+  _avTaps++;
+
+  // Tiny visual pulse so the user knows the tap registered
+  const target = (ev && ev.currentTarget) || document.getElementById('prof-avatar');
+  if(target){
+    target.style.transition='transform .15s ease';
+    target.style.transform='scale(1.18)';
+    setTimeout(()=>{ target.style.transform='scale(1)'; }, 150);
+  }
+
+  clearTimeout(_avTimer);
+  _avTimer = setTimeout(()=>{ _avTaps = 0; }, 5000);
+
+  // Show progress on later taps (so user knows they're close)
+  if(_avTaps === 2) showToast && showToast('1 more tap…','');
+
+  if(_avTaps >= 3){
+    _avTaps = 0;
+    const panel = document.getElementById('dev-panel');
+    if(!panel) return;
+    panel.style.display = 'block';
+    // If user is not already on Profile tab, switch them there
+    const profileTab = document.querySelector('.tab[onclick*="profile"]');
+    if(profileTab && !profileTab.classList.contains('on')){
+      try { switchTab('profile', profileTab); } catch(_){}
+    }
+    setTimeout(()=>panel.scrollIntoView({ behavior:'smooth', block:'center' }), 200);
+    const t = document.getElementById('demoModeToggle');
+    if(t) t.checked = inDemoMode();
+    localStorage.setItem('tt_dev_unlock','1');
+    showToast && showToast('✦ Developer panel unlocked','');
+  }
+}
+
+function toggleDemoMode(on){
+  localStorage.setItem('tt_demo_mode', on ? '1' : '0');
+  showToast && showToast(on ? '🟢 Demo Mode ON — prints will show a popup' : '⚪️ Demo Mode OFF — real printing restored', '');
+}
+
+// If the dev panel was unlocked in a previous session, keep it visible.
+document.addEventListener('DOMContentLoaded', ()=>{
+  if(localStorage.getItem('tt_dev_unlock') === '1'){
+    const panel = document.getElementById('dev-panel');
+    if(panel) panel.style.display = 'block';
+    const t = document.getElementById('demoModeToggle');
+    if(t) t.checked = inDemoMode();
+  }
+  // Wire the TOPBAR avatar to also trigger the unlock (in addition to opening Profile)
+  const topAv = document.getElementById('user-btn');
+  if(topAv){
+    topAv.addEventListener('click', handleAvatarTap, true);
+  }
+});
+
+// Hide Pro/upsell UI as soon as DOM is ready
+document.addEventListener('DOMContentLoaded', ()=>{
+  if(!FREE_MODE) return;
+  const hideIds = ['plans-card','excel-pro-gate'];
+  hideIds.forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+  // Hide ALL "Upgrade to Pro" buttons sprinkled in the UI
+  document.querySelectorAll('button, a').forEach(el=>{
+    const t = (el.textContent||'').trim().toLowerCase();
+    if(t === 'upgrade to pro' || t.startsWith('upgrade to pro')) el.style.display='none';
+  });
+});
+let todayCount = parseInt(localStorage.getItem('tt_today_count')||'0');
+let todayDate = localStorage.getItem('tt_today_date')||'';
+let totalCount = parseInt(localStorage.getItem('tt_total')||'0');
+let labSz='micro', batchSz='micro', customSz='micro';
+let btDev=null, btChr=null, btConn=false, scanStr=null, scanIv=null, brc=0;
+let selPayMethod='upi', selPlanType='monthly';
+const HK='tt_hist';
+
+// ─── Reset daily count ───────────────────────────
+function checkDayReset(){
+  const today=new Date().toDateString();
+  if(todayDate!==today){todayCount=0;todayDate=today;localStorage.setItem('tt_today_date',today);localStorage.setItem('tt_today_count','0');}
+}
+
+// ─── Auth ─────────────────────────────────────────
+function googleLogin(){
+  // Simulate Google OAuth (in production use Firebase or Google Identity)
+  const name = prompt('Enter your name (simulating Google login):','Researcher');
+  if(!name) return;
+  const email = prompt('Enter your email:','lab@example.com');
+  if(!email) return;
+  user={name,email,initial:name[0].toUpperCase()};
+  localStorage.setItem('tt_user',JSON.stringify(user));
+  launchApp();
+}
+
+function skipLogin(){
+  user={name:'Guest User',email:'',initial:'G'};
+  launchApp();
+}
+
+function logout(){
+  if(!confirm('Log out?')) return;
+  localStorage.removeItem('tt_user');
+  user=null;
+  document.getElementById('main-app').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+}
+
+function launchApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('main-app').style.display='flex';
+  checkDayReset();
+  updateQuota();
+  updatePlanUI();
+  initBatch();
+  renderHist();
+  updateExcelUI();
+}
+
+// ─── Plan / Quota ─────────────────────────────────
+function updateQuota(){
+  checkDayReset();
+  const used = todayCount;
+  const pct = isPro ? 10 : Math.min(100,(used/FREE_LIMIT)*100);
+  const ql=document.getElementById('quota-label');
+  const qf=document.getElementById('quota-fill');
+  const qc=document.getElementById('quota-count');
+  if(ql) ql.textContent = isPro ? 'Pro — unlimited' : 'Daily labels';
+  if(qf){qf.style.width=pct+'%';qf.className='quota-fill'+(pct>75&&!isPro?' warn':'');}
+  if(qc) qc.textContent = isPro ? `${used} today` : `${used} / ${FREE_LIMIT}`;
+  const st=document.getElementById('stat-today');
+  const stot=document.getElementById('stat-total');
+  const sh=document.getElementById('stat-hist');
+  if(st) st.textContent=used;
+  if(stot) stot.textContent=totalCount;
+  if(sh) sh.textContent=getHist().length;
+}
+
+function canGenerate(n=1){
+  if(isPro) return true;
+  checkDayReset();
+  if(todayCount+n > FREE_LIMIT){
+    openModal('upgrade-modal');
+    showToast('Free limit reached! Upgrade to Pro for unlimited labels','warn');
+    return false;
+  }
+  return true;
+}
+
+function addCount(n=1){
+  checkDayReset();
+  todayCount+=n; totalCount+=n;
+  localStorage.setItem('tt_today_count',todayCount);
+  localStorage.setItem('tt_total',totalCount);
+  updateQuota();
+}
+
+function updatePlanUI(){
+  if(!user) return;
+  document.getElementById('user-initial').textContent = user.initial||'U';
+  document.getElementById('prof-avatar').textContent = user.initial||'U';
+  document.getElementById('prof-name').textContent = user.name||'User';
+  document.getElementById('prof-email').textContent = user.email||'Guest';
+  const badge = document.getElementById('plan-badge');
+  const statBadge = document.getElementById('plan-status-badge');
+  const statusDot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+
+  if(FREE_MODE){
+    // 🌟 Launch mode — everything unlocked, no Pro/Free distinction.
+    badge.style.display = 'none';
+    if(statBadge){
+      statBadge.style.cssText = 'display:inline-block;background:linear-gradient(135deg,rgba(0,229,255,0.15),rgba(124,58,237,0.12));border:1px solid rgba(0,229,255,0.4);color:#00e5ff;font-size:11px;padding:3px 12px;border-radius:20px;letter-spacing:.6px;';
+      statBadge.textContent = '✦ ALL FEATURES UNLOCKED';
+    }
+    statusDot && statusDot.classList.add('pro');
+    if(statusText) statusText.textContent = 'TUBETAG  ·  UNLIMITED  ·  BLUETOOTH';
+    // Unlock the LARGE / CRYO size buttons
+    document.querySelectorAll('.sz-btn.locked').forEach(b=>{
+      b.classList.remove('locked');
+      b.onclick = null;
+      const m = b.closest('.sz-grid').id.replace('sg-','');
+      b.onclick = ()=>pickSz(b,m);
+      const sn = b.querySelector('.sn'); if(sn) sn.textContent = sn.textContent.replace('★','');
+    });
+    return;
+  }
+
+  if(isPro){
+    badge.className='pro-badge'; badge.textContent='PRO'; badge.onclick=openProStatus;
+    statBadge.style.cssText='display:inline-block;background:linear-gradient(135deg,rgba(245,200,66,0.15),rgba(255,107,138,0.1));border:1px solid rgba(245,200,66,0.4);color:#f5c842;font-size:11px;padding:3px 12px;border-radius:20px;';
+    statBadge.textContent='★ PRO PLAN ACTIVE';
+    statusDot.classList.add('pro');
+    statusText.textContent='TUBETAG PRO · UNLIMITED · BLUETOOTH';
+    document.querySelectorAll('.sz-btn.locked').forEach(b=>{
+      b.classList.remove('locked');
+      b.onclick=null;
+      const m=b.closest('.sz-grid').id.replace('sg-','');
+      b.onclick=()=>pickSz(b,m);
+      b.querySelector('.sn').textContent=b.querySelector('.sn').textContent.replace('★','');
+    });
+  } else {
+    badge.className='free-badge'; badge.textContent='FREE';
+  }
+}
+
+function proGate(el,mode){
+  showToast('★ LARGE & CRYO sizes — Pro only. Upgrade!','warn');
+  openModal('upgrade-modal');
+}
+
+// ─── Tab ─────────────────────────────────────────
+function switchTab(t,el){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  if(el){
+    el.classList.add('on');
+  } else {
+    // find by data or position
+    const tabs=document.querySelectorAll('.tab');
+    const names=['lab','batch','custom','scan','history','profile'];
+    const idx=names.indexOf(t);
+    if(idx>=0&&tabs[idx]) tabs[idx].classList.add('on');
+  }
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('on'));
+  const scr=document.getElementById('screen-'+t);
+  if(scr) scr.classList.add('on');
+  if(t==='history') renderHist();
+  if(t==='profile'){updateQuota();updateExcelUI();}
+  if(t!=='scan') stopScan();
+}
+
+// ─── Size picker ─────────────────────────────────
+function pickSz(el,mode){
+  document.getElementById('sg-'+mode).querySelectorAll('.sz-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  if(mode==='lab') labSz=el.dataset.s;
+  else if(mode==='batch') batchSz=el.dataset.s;
+  else customSz=el.dataset.s;
+}
+
+// ─── Label Style State ────────────────────────────
+let labStyle='qr-text', batchStyle='qr-text', customStyle='qr-text';
+let labOrient='horizontal', batchOrient='horizontal', customOrient='horizontal';
+let batchData = [];
+
+// ─── Institute Logo (shared across Sample / Batch / Custom) ───
+//   Persisted in localStorage as { data: 'data:image/png;base64,...', size: 18 }
+function getInstituteLogo(){
+  try {
+    const raw = localStorage.getItem('tt_logo');
+    if(!raw) return null;
+    return JSON.parse(raw);
+  } catch(_){ return null; }
+}
+function handleLogoUpload(ev){
+  const file = ev.target.files && ev.target.files[0];
+  if(!file) return;
+  if(file.size > 2 * 1024 * 1024){
+    showToast('⚠️ Logo too big — please use an image under 2 MB','warn');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const size = parseInt(document.getElementById('logo-size').value) || 18;
+    localStorage.setItem('tt_logo', JSON.stringify({ data: e.target.result, size }));
+    refreshLogoUI();
+    showToast('✅ Logo saved — will appear on every label','ok');
+  };
+  reader.readAsDataURL(file);
+}
+function removeLogo(){
+  localStorage.removeItem('tt_logo');
+  refreshLogoUI();
+  showToast('Logo removed','');
+}
+function onLogoSizeChange(v){
+  const out = document.getElementById('logo-size-out');
+  if(out) out.textContent = v + 'px';
+  const cur = getInstituteLogo();
+  if(cur){
+    cur.size = parseInt(v);
+    localStorage.setItem('tt_logo', JSON.stringify(cur));
+  }
+}
+function refreshLogoUI(){
+  const logo  = getInstituteLogo();
+  const empty = document.getElementById('logo-empty');
+  const set   = document.getElementById('logo-set');
+  if(!empty || !set) return;
+  if(logo){
+    empty.style.display = 'none';
+    set.style.display   = 'flex';
+    document.getElementById('logo-thumb').src   = logo.data;
+    document.getElementById('logo-size').value  = logo.size || 18;
+    document.getElementById('logo-size-out').textContent = (logo.size || 18) + 'px';
+  } else {
+    empty.style.display = 'flex';
+    set.style.display   = 'none';
+  }
+}
+document.addEventListener('DOMContentLoaded', refreshLogoUI);
+
+function pickOrient(el, mode, orient){
+  // Update visual state of the two pill buttons
+  const wrap = el.parentElement;
+  wrap.querySelectorAll('.orient-btn').forEach(b=>{
+    b.classList.remove('on');
+    b.style.background='#0d1526';
+    b.style.borderColor='#1a2d5a';
+    b.style.color='var(--text2)';
+  });
+  el.classList.add('on');
+  el.style.background='rgba(0,229,255,0.15)';
+  el.style.borderColor='var(--cyan)';
+  el.style.color='var(--cyan)';
+  if(mode==='lab')         labOrient    = orient;
+  else if(mode==='batch')  batchOrient  = orient;
+  else                     customOrient = orient;
+}
+
+// ─── Batch row management ─────────────────────────
+function addRow(idVal, orgVal, geneVal, ncbiVal){
+  const wrap = document.getElementById('brows');
+  if(!wrap) return;
+  const row = document.createElement('div');
+  row.className = 'brow';
+  row.innerHTML = `
+    <input type="text" class="bid"   placeholder="Sample ID" value="${esc(idVal||'')}"   autocomplete="off"/>
+    <input type="text" class="borg"  placeholder="Organism"  value="${esc(orgVal||'')}"  autocomplete="off"/>
+    <input type="text" class="bgn"   placeholder="Gene"      value="${esc(geneVal||'')}" autocomplete="off"/>
+    <input type="text" class="bncbi" placeholder="NCBI ID"   value="${esc(ncbiVal||'')}" autocomplete="off"/>
+    <button class="rm" title="Remove row" type="button">×</button>
+  `;
+  row.querySelector('.rm').addEventListener('click', ()=>{
+    const rows = wrap.querySelectorAll('.brow');
+    if(rows.length<=1){
+      row.querySelectorAll('input').forEach(i=>i.value='');
+      return;
+    }
+    row.remove();
+  });
+  wrap.appendChild(row);
+  const firstInput = row.querySelector('.bid');
+  if(firstInput) firstInput.focus();
+}
+
+function initBatch(){
+  const wrap = document.getElementById('brows');
+  if(!wrap) return;
+  if(wrap.children.length > 0) return; // already initialized
+  for(let i=0;i<3;i++) addRow();
+  // Remove auto-focus from the very first init (only addRow user-clicks should focus)
+  if(document.activeElement && document.activeElement.tagName === 'INPUT'){
+    document.activeElement.blur();
+  }
+}
+
+// ─── Excel UI toggle (Free vs Pro gate) ───────────
+function updateExcelUI(){
+  const gate = document.getElementById('excel-pro-gate');
+  const btn  = document.getElementById('excel-pro-btn');
+  if(!gate || !btn) return;
+  if(isPro){
+    gate.style.display = 'none';
+    btn.style.display  = batchData.length ? 'flex' : 'none';
+  } else {
+    gate.style.display = 'flex';
+    btn.style.display  = 'none';
+  }
+}
+
+function pickStyle(el, mode){
+  document.getElementById('st-'+mode).querySelectorAll('.st-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  const st = el.dataset.st;
+  if(mode==='lab')   labStyle   = st;
+  else if(mode==='batch') batchStyle = st;
+  else               customStyle = st;
+  // Show/hide text options
+  const textOptsId = 'text-opts-'+mode;
+  const opts = document.getElementById(textOptsId);
+  if(opts) opts.style.display = st==='qr-only' ? 'none' : 'block';
+}
+
+// ─── Label sizes (px at 96dpi screen) ─────────────
+const SC = {
+  micro:  {px:28, w:94,  h:38},
+  small:  {px:38, w:132, h:49},
+  medium: {px:55, w:189, h:68},
+  large:  {px:78, w:264, h:94},
+  xlarge: {px:100,w:340, h:132}
+};
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ─── Make a single label element ──────────────────
+// style: 'qr-text' | 'qr-only' | 'text-only'
+// opts: { fsizeId, fsizeDetail, fweight, align, showId, showOrg, showGene, showDate,
+//         fsize, color }   (custom text fields)
+function mkLbl(data, sz, lines, style, opts){
+  opts = opts || {};
+  const cfg = SC[sz];
+  const orient = opts.orient || 'horizontal';  // 'horizontal' | 'vertical'
+  const isVert = orient === 'vertical';
+
+  // For vertical labels, swap width/height so the label is tall & narrow (fits a tube).
+  const W = isVert ? cfg.h : cfg.w;
+  const H = isVert ? cfg.w : cfg.h;
+
+  const lbl = document.createElement('div');
+  lbl.className = `lbl s-${sz}` + (isVert ? ' vert' : '');
+  // position:relative so the logo can sit absolutely in the top-right corner
+  lbl.style.cssText = `position:relative;background:#fff;border:.5px solid #bbb;display:flex;
+    flex-direction:${isVert ? 'column' : 'row'};align-items:center;
+    font-family:Arial,sans-serif;overflow:hidden;width:${W}px;height:${H}px;`;
+
+  // ── Institute logo (top-right corner) ────────────
+  if (opts.logo && opts.logo.data) {
+    const logoSz = Math.min(opts.logo.size || 18, Math.floor(H * 0.6));
+    const li = document.createElement('img');
+    li.src = opts.logo.data;
+    li.alt = '';
+    li.style.cssText = `position:absolute;top:2px;right:2px;width:${logoSz}px;height:${logoSz}px;
+      object-fit:contain;z-index:2;pointer-events:none;background:transparent;`;
+    lbl.appendChild(li);
+  }
+
+  if(style === 'qr-only'){
+    lbl.style.justifyContent = 'center';
+    const qSide = Math.min(W, H) - 4;
+    const qd = document.createElement('div');
+    qd.style.cssText = `width:${qSide}px;height:${qSide}px;flex-shrink:0;`;
+    lbl.appendChild(qd);
+    new QRCode(qd,{text:data,width:qSide,height:qSide,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+
+  } else if(style === 'text-only'){
+    const fsz   = parseInt(opts.fsize||11);
+    const fw    = opts.fweight || '700';
+    const align = isVert ? 'center' : (opts.align || 'left');
+    const color = opts.color  || '#000000';
+    const td = document.createElement('div');
+    td.style.cssText = `flex:1;padding:3px 5px;overflow:hidden;text-align:${align};` +
+                       (isVert ? 'width:100%;display:flex;flex-direction:column;justify-content:center;' : '');
+    const textLines = (lines||[]).filter(l=>l&&l!=='—');
+    const parts     = data.length<=40 ? [data] : textLines;
+    parts.forEach((line,i)=>{
+      const sp = document.createElement('div');
+      sp.style.cssText = `font-size:${i===0?fsz:Math.max(5,fsz-3)}px;font-weight:${i===0?fw:'400'};
+        color:${color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+        line-height:1.3;`;
+      sp.textContent = line;
+      td.appendChild(sp);
+    });
+    lbl.appendChild(td);
+
+  } else {
+    // ── QR + Text ──
+    // Vertical: QR fits the narrow side (W). Horizontal: QR matches H.
+    const qPx   = isVert ? Math.min(W - 6, H * 0.55) : cfg.px;
+    const fsId  = parseInt(opts.fsizeId  || 9);
+    const fsDet = parseInt(opts.fsizeDetail || 6);
+    const fw    = opts.fweight || '700';
+    const align = isVert ? 'center' : (opts.align || 'left');
+
+    const qd = document.createElement('div');
+    qd.style.cssText = `width:${qPx}px;height:${qPx}px;flex-shrink:0;` + (isVert ? 'margin-top:3px;' : '');
+    lbl.appendChild(qd);
+    new QRCode(qd,{text:data,width:qPx,height:qPx,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+
+    const td = document.createElement('div');
+    td.style.cssText = `flex:1;padding:${isVert ? '4px 4px 3px' : '2px 4px'};overflow:hidden;text-align:${align};` +
+                       (isVert ? 'width:100%;display:flex;flex-direction:column;justify-content:center;gap:1px;' : '');
+
+    const today = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});
+    const toShow = [];
+    if(lines && lines[0] && (opts.showId!==false))   toShow.push({txt:lines[0], big:true});
+    if(lines && lines[1] && (opts.showOrg!==false))  toShow.push({txt:lines[1], big:false});
+    if(lines && lines[2] && (opts.showGene!==false)) toShow.push({txt:lines[2], big:false});
+    if(lines && lines[3] && lines[3] !== '—' && (opts.showNcbi!==false)) toShow.push({txt:lines[3], big:false});
+    if(opts.showDate)                                 toShow.push({txt:today,    big:false});
+
+    if(!lines){
+      const disp = data.length>40 ? data.slice(0,38)+'…' : data;
+      toShow.push({txt:disp, big:true});
+    }
+
+    toShow.forEach(item=>{
+      const sp = document.createElement('div');
+      sp.style.cssText = `font-size:${item.big?fsId:fsDet}px;font-weight:${item.big?fw:'400'};
+        color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25;`;
+      sp.textContent = item.txt;
+      td.appendChild(sp);
+    });
+    lbl.appendChild(td);
+  }
+  return lbl;
+}
+
+// ─── Single large QR for download card ────────────
+function bsqr(id, data){
+  const b = document.getElementById(id);
+  if(!b) return;
+  b.innerHTML = '';
+  new QRCode(b,{text:data,width:200,height:200,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
+}
+
+function dlQR(id, pfx){
+  const b = document.getElementById(id);
+  if(!b) return;
+  const c = b.querySelector('canvas'), img = b.querySelector('img');
+  const src = c ? c.toDataURL('image/png') : (img ? img.src : '');
+  if(!src) return;
+  const a = document.createElement('a');
+  a.href = src; a.download = `${pfx}_qr_${Date.now()}.png`; a.click();
+}
+
+// ─── Get current text opts for mode ───────────────
+function getLabOpts(){
+  return {
+    orient:      labOrient,
+    fsizeId:     document.getElementById('lab-fsize-id')?.value     || '9',
+    fsizeDetail: document.getElementById('lab-fsize-detail')?.value || '6',
+    fweight:     document.getElementById('lab-fweight')?.value      || '700',
+    align:       document.getElementById('lab-align')?.value        || 'left',
+    showId:      document.getElementById('show-id')?.checked  !== false,
+    showOrg:     document.getElementById('show-org')?.checked !== false,
+    showGene:    document.getElementById('show-gene')?.checked!== false,
+    showNcbi:    document.getElementById('show-ncbi')?.checked!== false,
+    showDate:    document.getElementById('show-date')?.checked === true,
+    logo:        getInstituteLogo(),
+  };
+}
+function getBatchOpts(){
+  return {
+    orient:      batchOrient,
+    fsizeId:     document.getElementById('batch-fsize-id')?.value     || '9',
+    fsizeDetail: document.getElementById('batch-fsize-detail')?.value || '6',
+    fweight:     document.getElementById('batch-fweight')?.value      || '700',
+    align:       document.getElementById('batch-align')?.value        || 'left',
+    logo:        getInstituteLogo(),
+  };
+}
+function getCustomOpts(){
+  return {
+    orient:  customOrient,
+    fsize:   document.getElementById('custom-fsize')?.value   || '11',
+    fweight: document.getElementById('custom-fweight')?.value || '700',
+    align:   document.getElementById('custom-align')?.value   || 'center',
+    color:   document.getElementById('custom-color')?.value   || '#000000',
+    logo:    getInstituteLogo(),
+  };
+}
+
+// ─── Generate Lab ──────────────────────────────────
+function genLab(){
+  const id   = document.getElementById('sid').value.trim()  || '—';
+  const org  = document.getElementById('sorg').value.trim() || '—';
+  const gene = document.getElementById('sgene').value.trim()|| '—';
+  const ncbi = document.getElementById('sncbi').value.trim()|| '—';
+  const n    = Math.min(20,Math.max(1,parseInt(document.getElementById('scp').value)||4));
+  if(!canGenerate(n)) return;
+
+  const dataParts = [`ID:${id}`,`ORG:${org}`,`GENE:${gene}`];
+  if(ncbi !== '—') dataParts.push(`NCBI:${ncbi}`);
+  const data = dataParts.join(';');
+
+  const opts = getLabOpts();
+  const sh   = document.getElementById('ls');
+  sh.innerHTML = '';
+  for(let i=0;i<n;i++) sh.appendChild(mkLbl(data, labSz, [id,org,gene,ncbi], labStyle, opts));
+
+  const styleLabel = labStyle==='qr-only'?'QR Only':labStyle==='text-only'?'Text Only':'QR + Text';
+  document.getElementById('lct').textContent = `${n} labels · ${labSz.toUpperCase()} · ${styleLabel}`;
+
+  const sqc = document.getElementById('sqc');
+  if(labStyle !== 'text-only'){
+    sqc.style.display = 'block';
+    bsqr('sqb', data);
+  } else { sqc.style.display='none'; }
+
+  const w = document.getElementById('lw');
+  w.classList.add('vis');
+  w.scrollIntoView({behavior:'smooth',block:'nearest'});
+  addCount(n);
+  saveH({type:'lab',id,org,gene,ncbi,data,size:labSz,style:labStyle,ts:Date.now()});
+  showToast(`✅ ${n} ${styleLabel} labels generated`,'ok');
+}
+
+// ─── Generate Batch ────────────────────────────────
+function genBatch(){
+  const rows   = document.querySelectorAll('.brow');
+  const copies = Math.min(8,Math.max(1,parseInt(document.getElementById('bcp').value)||2));
+  const total  = rows.length * copies;
+  if(!canGenerate(total)) return;
+
+  const opts = getBatchOpts();
+  const sh   = document.getElementById('bs');
+  sh.innerHTML = '';
+  let tot = 0;
+  batchData = [];
+
+  rows.forEach((row,idx)=>{
+    const id   = row.querySelector('.bid').value.trim()   || '—';
+    const org  = row.querySelector('.borg').value.trim()  || '—';
+    const gene = row.querySelector('.bgn').value.trim()   || '—';
+    const ncbi = row.querySelector('.bncbi')?.value.trim()|| '—';
+    const dataParts = [`ID:${id}`,`ORG:${org}`,`GENE:${gene}`];
+    if(ncbi !== '—') dataParts.push(`NCBI:${ncbi}`);
+    const data = dataParts.join(';');
+    batchData.push({no:idx+1,sampleId:id,organism:org,gene,ncbi,data,
+      style:batchStyle,size:batchSz,copies,date:new Date().toLocaleDateString()});
+    for(let i=0;i<copies;i++) sh.appendChild(mkLbl(data, batchSz, [id,org,gene,ncbi], batchStyle, opts));
+    tot += copies;
+    if(id!=='—') saveH({type:'batch',id,org,gene,ncbi,data,size:batchSz,style:batchStyle,ts:Date.now()});
+  });
+
+  const styleLabel = batchStyle==='qr-only'?'QR Only':batchStyle==='text-only'?'Text Only':'QR + Text';
+  document.getElementById('bct2').textContent = `${tot} labels · ${rows.length} samples · ${styleLabel}`;
+  addCount(tot);
+  const w = document.getElementById('bw');
+  w.classList.add('vis');
+  w.scrollIntoView({behavior:'smooth',block:'nearest'});
+  updateExcelUI();
+  showToast(`✅ ${tot} ${styleLabel} labels generated`,'ok');
+}
+
+// ─── Excel Download (Pro only) ─────────────────────
+function downloadExcel(){
+  if(!isPro){openModal('upgrade-modal');return;}
+  if(!batchData.length){showToast('Generate batch labels first','warn');return;}
+  const rows=[
+    ['TubeTag Batch Export — '+new Date().toLocaleString()],
+    [],
+    ['#','Sample ID','Organism','Gene','NCBI ID','Style','Label Size','Copies','QR Data','Date'],
+    ...batchData.map(r=>[r.no,r.sampleId,r.organism,r.gene,r.ncbi||'',r.style,r.size.toUpperCase(),r.copies,r.data,r.date])
+  ];
+  const xmlRows=rows.map(row=>`<Row>${row.map(cell=>`<Cell><Data ss:Type="${typeof cell==='number'?'Number':'String'}">${String(cell).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</Data></Cell>`).join('')}</Row>`).join('');
+  const xml=`<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Worksheet ss:Name="TubeTag Batch"><Table DefaultColumnWidth="120">${xmlRows}</Table></Worksheet>
+</Workbook>`;
+  const blob=new Blob([xml],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`TubeTag_Batch_${new Date().toISOString().slice(0,10)}.xls`;a.click();
+  URL.revokeObjectURL(url);
+  showToast('📊 Excel file downloaded!','ok');
+}
+
+// ─── Generate Custom ───────────────────────────────
+function genCustom(){
+  const txt = document.getElementById('ctxt').value.trim();
+  if(!txt){document.getElementById('ctxt').focus();return;}
+  const n = Math.min(20,Math.max(1,parseInt(document.getElementById('ccp').value)||4));
+  if(!canGenerate(n)) return;
+
+  const opts = getCustomOpts();
+  const sh   = document.getElementById('cs');
+  sh.innerHTML = '';
+  for(let i=0;i<n;i++) sh.appendChild(mkLbl(txt, customSz, null, customStyle, opts));
+
+  const styleLabel = customStyle==='qr-only'?'QR Only':customStyle==='text-only'?'Text Only':'QR + Text';
+  document.getElementById('cct').textContent = `${n} labels · ${styleLabel}`;
+
+  const cdlc = document.getElementById('cdlc');
+  if(customStyle !== 'text-only'){
+    cdlc.style.display = 'block';
+    bsqr('csqb', txt);
+  } else { cdlc.style.display='none'; }
+
+  const w = document.getElementById('cw');
+  w.classList.add('vis');
+  w.scrollIntoView({behavior:'smooth',block:'nearest'});
+  addCount(n);
+  saveH({type:'custom',id:txt.slice(0,40),data:txt,size:customSz,style:customStyle,ts:Date.now()});
+  showToast(`✅ ${n} ${styleLabel} labels generated`,'ok');
+}
+
+// ═══════════════════════════════════════════════════
+// BARCODE ENGINE — Fully rewritten, ISO verified
+// ═══════════════════════════════════════════════════
+
+// ─── Print ────────────────────────────────────────
+// ─── Print System ─────────────────────────────────
+let currentPrintSheet = '';
+let currentPrinterType = 'standard';
+let currentPaper = 'a4';
+
+const PRINTER_CONFIGS = {
+  standard: {
+    papers: ['a4','letter','a5'],
+    defaultPaper: 'a4',
+    pageWidth: { a4:'210mm', letter:'216mm', a5:'148mm' },
+    pageHeight: { a4:'297mm', letter:'279mm', a5:'210mm' },
+    showThermal: false,
+  },
+  thermal58: {
+    papers: ['roll58'],
+    defaultPaper: 'roll58',
+    pageWidth: { roll58:'58mm' },
+    pageHeight: { roll58:'auto' },
+    showThermal: true,
+    widthHint: '58mm',
+  },
+  thermal80: {
+    papers: ['roll80'],
+    defaultPaper: 'roll80',
+    pageWidth: { roll80:'80mm' },
+    pageHeight: { roll80:'auto' },
+    showThermal: true,
+    widthHint: '80mm',
+  }
+};
+
+function openPrintModal(sheetId){
+  const sheet = document.getElementById(sheetId);
+  if(!sheet || !sheet.children.length){
+    showToast('⚠️ Generate labels first, then print.','warn');
+    return;
+  }
+  currentPrintSheet = sheetId;
+  updatePrintPreview();
+  openModal('print-modal');
+}
+
+function selectPrinter(el){
+  document.querySelectorAll('[data-pt]').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  currentPrinterType = el.dataset.pt;
+  const cfg = PRINTER_CONFIGS[currentPrinterType];
+
+  // Show/hide paper options
+  document.querySelectorAll('[data-paper]').forEach(p=>{
+    p.style.display = cfg.papers.includes(p.dataset.paper) ? 'block' : 'none';
+  });
+
+  // Auto-select default paper
+  const defaultPaperEl = document.querySelector(`[data-paper="${cfg.defaultPaper}"]`);
+  if(defaultPaperEl){ selectPaper(defaultPaperEl); }
+
+  // Show/hide thermal options
+  document.getElementById('thermal-opts-section').style.display = cfg.showThermal ? 'block' : 'none';
+  if(cfg.widthHint) document.getElementById('thermal-width-hint').textContent = cfg.widthHint;
+
+  // Update columns default for thermal
+  const colsSel = document.getElementById('print-cols');
+  if(currentPrinterType !== 'standard'){
+    colsSel.value = '1';
+  } else {
+    colsSel.value = '2';
+  }
+  updatePrintPreview();
+}
+
+function selectPaper(el){
+  document.querySelectorAll('[data-paper]').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  currentPaper = el.dataset.paper;
+  updatePrintPreview();
+}
+
+function updatePrintPreview(){
+  const box = document.getElementById('print-preview-box');
+  const sheet = document.getElementById(currentPrintSheet);
+  if(!sheet || !sheet.children.length){
+    box.innerHTML = '<div style="font-size:12px;color:#888;font-family:monospace;text-align:center;">Generate labels first to preview</div>';
+    return;
+  }
+  const cols   = document.getElementById('print-cols').value;
+  const border = document.getElementById('print-border').value;
+  const center = document.getElementById('print-center')?.checked || false;
+
+  const items = Array.from(sheet.children).slice(0,6);
+  const scale = 0.55;
+
+  // Build canvas → dataURL map for source labels (cloneNode loses canvas pixels)
+  const canvasMap = new Map();
+  Array.from(sheet.querySelectorAll('canvas')).forEach(cv => {
+    try { canvasMap.set(cv, cv.toDataURL('image/png')); } catch(_){}
+  });
+
+  box.innerHTML = '';
+  const wrap = document.createElement('div');
+  const justify = center ? 'center' : 'flex-start';
+  wrap.style.cssText = cols==='auto'
+    ? `display:flex;flex-wrap:wrap;gap:4px;padding:6px;background:#fff;width:100%;justify-content:${justify};`
+    : `display:grid;grid-template-columns:repeat(${cols},1fr);gap:4px;padding:6px;background:#fff;width:100%;${center?'justify-items:center;':''}`;
+
+  items.forEach(lbl=>{
+    const clone = lbl.cloneNode(true);
+    clone.style.border = border;
+    clone.style.transform = `scale(${scale})`;
+    clone.style.transformOrigin = 'top left';
+    clone.style.display = 'flex';
+    clone.style.overflow = 'hidden';
+
+    // Swap each blank cloned canvas for an <img> built from the original
+    const origCanvases  = lbl.querySelectorAll('canvas');
+    const cloneCanvases = clone.querySelectorAll('canvas');
+    origCanvases.forEach((origCv, i) => {
+      const cloneCv = cloneCanvases[i];
+      if (!cloneCv) return;
+      const url = canvasMap.get(origCv);
+      if (!url) return;
+      const img = document.createElement('img');
+      img.src = url;
+      img.style.width  = origCv.style.width  || origCv.width  + 'px';
+      img.style.height = origCv.style.height || origCv.height + 'px';
+      img.style.display = 'block';
+      img.style.imageRendering = 'crisp-edges';
+      cloneCv.parentNode.replaceChild(img, cloneCv);
+    });
+
+    wrap.appendChild(clone);
+  });
+  box.appendChild(wrap);
+}
+
+async function executePrint(){
+  const sheet = document.getElementById(currentPrintSheet);
+  if(!sheet || !sheet.children.length){
+    showToast('⚠️ Generate labels first','warn');
+    return;
+  }
+
+  // 🟢 DEMO MODE — skip real printing, show a confirmation popup
+  if(inDemoMode()){
+    closeModal && closeModal('print-modal');
+    const n = sheet.children.length;
+    setTimeout(()=>alert(`✅ Demo Mode Success!\n\n${n} label${n===1?'':'s'} would have been sent to the printer.\n\n(Demo Mode is ON — toggle it off in Profile → Developer panel to enable real printing.)`), 100);
+    return;
+  }
+
+  const cols = document.getElementById('print-cols').value;
+  const gap = document.getElementById('print-gap').value + 'mm';
+  const margin = document.getElementById('print-margin').value + 'mm';
+  const border = document.getElementById('print-border').value;
+  const cfg = PRINTER_CONFIGS[currentPrinterType] || PRINTER_CONFIGS.standard;
+  const pw = cfg.pageWidth[currentPaper] || '210mm';
+  const ph = cfg.pageHeight[currentPaper] || '297mm';
+  const isThermal = currentPrinterType !== 'standard';
+  const thermalH = isThermal ? (document.getElementById('thermal-height').value || '20mm') : null;
+  const forceBW = isThermal && document.getElementById('thermal-bw').checked;
+
+  showToast('🖨 Preparing labels…','');
+
+  // ── CRITICAL FIX: freeze all canvases → img BEFORE cloning ──
+  // cloneNode(true) does NOT copy canvas pixel data.
+  // We must convert every canvas to a data URL img first.
+  const workingSheet = sheet.cloneNode(true);
+
+  // Get all canvases from original (not clone — clone is blank)
+  const origCanvases = Array.from(sheet.querySelectorAll('canvas'));
+  const cloneCanvases = Array.from(workingSheet.querySelectorAll('canvas'));
+
+  origCanvases.forEach((origCv, i) => {
+    const cloneCv = cloneCanvases[i];
+    if (!cloneCv) return;
+    try {
+      const dataURL = origCv.toDataURL('image/png');
+      const img = document.createElement('img');
+      img.src = dataURL;
+      img.width  = origCv.width;
+      img.height = origCv.height;
+      img.style.display = 'block';
+      img.style.imageRendering = 'crisp-edges';
+      cloneCv.parentNode.replaceChild(img, cloneCv);
+    } catch(e) {
+      // tainted canvas fallback — leave as-is
+    }
+  });
+
+  // Also freeze QR img tags (QRCode.js renders both canvas + img)
+  // Remove canvas versions since we have img versions now
+  workingSheet.querySelectorAll('canvas').forEach(cv => {
+    const img = document.createElement('img');
+    try { img.src = cv.toDataURL('image/png'); } catch(e) {}
+    img.width = cv.width; img.height = cv.height;
+    img.style.display = 'block';
+    cv.parentNode && cv.parentNode.replaceChild(img, cv);
+  });
+
+  // Build grid layout style — with optional centering
+  const center = document.getElementById('print-center')?.checked || false;
+  const justify = center ? 'justify-content:center;align-content:center;' : '';
+  const gridJustify = center ? 'justify-items:center;align-items:center;justify-content:center;' : '';
+  const gridStyle = cols === 'auto'
+    ? `display:flex;flex-wrap:wrap;gap:${gap};padding:${margin};background:#fff;${justify}`
+    : `display:grid;grid-template-columns:repeat(${cols},1fr);gap:${gap};padding:${margin};background:#fff;${gridJustify}`;
+
+  // Apply per-label styles and collect HTML
+  const labelHTMLs = Array.from(workingSheet.children).map(lbl => {
+    lbl.style.border  = border;
+    lbl.style.background = '#fff';
+    lbl.style.pageBreakInside = 'avoid';
+    lbl.style.breakInside     = 'avoid';
+    if (isThermal && thermalH) {
+      lbl.style.width    = '100%';
+      lbl.style.height   = thermalH;
+      lbl.style.overflow = 'hidden';
+      lbl.style.pageBreakAfter = 'always';
+      lbl.style.breakAfter     = 'page';
+    }
+    if (forceBW) lbl.style.filter = 'grayscale(100%) contrast(160%)';
+    // When the user wants center + only one label per page (typical for LARGE / CRYO):
+    //   put each label on its own page so it sits dead-centre.
+    if (center && !isThermal) {
+      lbl.style.pageBreakAfter = 'always';
+      lbl.style.breakAfter     = 'page';
+      lbl.style.margin         = 'auto';
+    }
+    return lbl.outerHTML;
+  }).join('');
+
+  // Build @page CSS
+  const pageCSS = `@page{size:${pw} ${ph};margin:0;}body,html{margin:0;padding:0;}`;
+
+  // Inject into print area
+  const pa = document.getElementById('print-area');
+  pa.innerHTML = `
+    <style>
+      ${pageCSS}
+      .ls-print{${gridStyle}box-sizing:border-box;}
+      .ls-print>*{box-sizing:border-box;}
+      .ls-print img{display:block!important;image-rendering:crisp-edges;}
+      .ls-print canvas{display:block!important;}
+    </style>
+    <div class="ls-print">${labelHTMLs}</div>`;
+  pa.style.display = 'block';
+
+  closeModal('print-modal');
+
+  // Wait for images to fully load, then print
+  const imgs = pa.querySelectorAll('img');
+  const imgLoads = Array.from(imgs).map(img =>
+    img.complete ? Promise.resolve() :
+    new Promise(r => { img.onload = r; img.onerror = r; })
+  );
+
+  await Promise.all(imgLoads);
+  await new Promise(r => setTimeout(r, 200)); // small settle delay
+
+  window.print();
+
+  setTimeout(() => {
+    pa.style.display = 'none';
+    pa.innerHTML = '';
+  }, 1500);
+}
+
+// Keep old smartPrint as fallback for BT
+function smartPrint(sheetId){
+  openPrintModal(sheetId);
+}
+
+// ─── Scan ─────────────────────────────────────────
+async function startScan(){
+  try{
+    scanStr=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    const v=document.getElementById('sv');v.srcObject=scanStr;v.style.display='block';
+    document.getElementById('sidle').style.display='none';
+    document.getElementById('sovr').style.display='flex';
+    document.getElementById('ssb').style.display='none';
+    document.getElementById('sstb').style.display='block';
+    if('BarcodeDetector' in window){
+      const det=new BarcodeDetector({formats:['qr_code']});
+      const cv=document.createElement('canvas'),ctx=cv.getContext('2d');
+      scanIv=setInterval(async()=>{
+        if(!v.videoWidth) return;
+        cv.width=v.videoWidth;cv.height=v.videoHeight;ctx.drawImage(v,0,0);
+        try{const c=await det.detect(cv);if(c.length>0){showSR(c[0].rawValue);stopScan();}}catch(e){}
+      },400);
+    } else {
+      showSR('BarcodeDetector not supported. Use Chrome 90+ on Android.');
+    }
+  }catch(e){alert('Camera access denied.\n'+e.message);}
+}
+function stopScan(){
+  if(scanStr) scanStr.getTracks().forEach(t=>t.stop());
+  if(scanIv) clearInterval(scanIv);
+  scanStr=null;scanIv=null;
+  const v=document.getElementById('sv');v.style.display='none';v.srcObject=null;
+  document.getElementById('sidle').style.display='block';
+  document.getElementById('sovr').style.display='none';
+  document.getElementById('ssb').style.display='block';
+  document.getElementById('sstb').style.display='none';
+}
+function showSR(raw){
+  const box=document.getElementById('srbox');box.classList.add('vis');
+  const c=document.getElementById('src2');
+  let sampleId = null;
+  if(raw.startsWith('ID:')&&raw.includes(';ORG:')){
+    const p={};raw.split(';').forEach(x=>{const[k,v]=x.split(':');if(k&&v!==undefined)p[k]=v;});
+    sampleId = p.ID || null;
+    const ncbiRow = p.NCBI ? `<div class="sr-row"><span class="sr-k">NCBI ID</span><span class="sr-v">${esc(p.NCBI)}</span></div>` : '';
+    c.innerHTML=`<div class="sr-row"><span class="sr-k">Sample ID</span><span class="sr-v">${esc(p.ID||'—')}</span></div>
+      <div class="sr-row"><span class="sr-k">Organism</span><span class="sr-v">${esc(p.ORG||'—')}</span></div>
+      <div class="sr-row"><span class="sr-k">Gene</span><span class="sr-v">${esc(p.GENE||'—')}</span></div>${ncbiRow}`;
+    // ── Show "Open tracking" call-to-action with status preview ──
+    const t = getTrack(sampleId);
+    const statusInfo = t ? `<span style="color:${STATUS_COLORS[t.status]||'#8aafd4'};">●</span> ${STATUS_LABELS[t.status]||t.status}` : '<span style="color:#8aafd4;">●</span> No tracking yet';
+    c.innerHTML += `<div style="margin-top:10px;padding:10px;background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.2);border-radius:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <div>
+          <div style="font-family:var(--fm);font-size:10px;color:var(--cyan);letter-spacing:.5px;">// SAMPLE STATUS</div>
+          <div style="font-size:12px;color:var(--text);margin-top:2px;">${statusInfo}</div>
+        </div>
+        <button class="btn primary" style="padding:8px 14px;font-size:12px;flex-shrink:0;" onclick="openTrackModal('${esc(sampleId||'')}',{org:'${esc(p.ORG||'')}',gene:'${esc(p.GENE||'')}',ncbi:'${esc(p.NCBI||'')}'})">⌖ Track</button>
+      </div>
+    </div>`;
+  } else {
+    c.innerHTML=`<div class="sr-row"><span class="sr-k">Data</span><span class="sr-v">${esc(raw)}</span></div>`;
+  }
+  document.getElementById('srraw').textContent='RAW: '+raw;
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  SAMPLE TRACKING — lifecycle + location + temperature (all on-device)
+// ════════════════════════════════════════════════════════════════════════
+const TK = 'tt_tracks';
+const STATUS_LABELS = {
+  created: 'Created',
+  active:  'Active',
+  in_use:  'In Use',
+  used:    'Used',
+  disposed:'Disposed',
+};
+const STATUS_COLORS = {
+  created:  '#00e5ff',
+  active:   '#22c55e',
+  in_use:   '#f5c842',
+  used:     '#7c3aed',
+  disposed: '#8aafd4',
+};
+const TEMP_OPTIONS = ['-80°C','-20°C','+4°C','RT'];
+
+function getAllTracks(){ try{ return JSON.parse(localStorage.getItem(TK)||'{}'); }catch(_){ return {}; } }
+function getTrack(sampleId){ return getAllTracks()[sampleId] || null; }
+function saveTrack(sampleId, t){
+  const all = getAllTracks();
+  all[sampleId] = t;
+  try { localStorage.setItem(TK, JSON.stringify(all)); } catch(_){}
+}
+
+let _trackCurrent = null;  // {sampleId, org, gene, ncbi}
+function openTrackModal(sampleId, meta){
+  if(!sampleId){ showToast && showToast('No Sample ID to track','warn'); return; }
+  meta = meta || {};
+  _trackCurrent = { sampleId, ...meta };
+
+  let t = getTrack(sampleId);
+  if(!t){
+    t = {
+      sampleId,
+      org: meta.org || '',
+      gene: meta.gene || '',
+      ncbi: meta.ncbi || '',
+      status: 'created',
+      location: { room:'', freezer:'', rack:'', position:'' },
+      temperature: '',
+      events: [{ at: Date.now(), type:'created', who:(user&&user.name)||'Guest', note:'Sample registered' }],
+      updatedAt: Date.now(),
+    };
+    saveTrack(sampleId, t);
+  }
+
+  document.getElementById('tk-sample-id').textContent = sampleId;
+  document.getElementById('tk-org').textContent  = t.org || meta.org || '—';
+  document.getElementById('tk-gene').textContent = t.gene || meta.gene || '—';
+  document.getElementById('tk-status').value     = t.status || 'created';
+  document.getElementById('tk-room').value       = (t.location && t.location.room) || '';
+  document.getElementById('tk-freezer').value    = (t.location && t.location.freezer) || '';
+  document.getElementById('tk-rack').value       = (t.location && t.location.rack) || '';
+  document.getElementById('tk-position').value   = (t.location && t.location.position) || '';
+  document.getElementById('tk-temp').value       = t.temperature || '';
+  document.getElementById('tk-note').value       = '';
+  renderTrackEvents(t.events || []);
+
+  openModal && openModal('track-modal');
+}
+
+function saveTrackChanges(){
+  if(!_trackCurrent) return;
+  const sampleId = _trackCurrent.sampleId;
+  const t = getTrack(sampleId) || {};
+  const prevStatus = t.status;
+  const prevTemp   = t.temperature;
+  const prevLoc    = JSON.stringify(t.location || {});
+
+  t.sampleId    = sampleId;
+  t.org         = t.org || _trackCurrent.org || '';
+  t.gene        = t.gene || _trackCurrent.gene || '';
+  t.ncbi        = t.ncbi || _trackCurrent.ncbi || '';
+  t.status      = document.getElementById('tk-status').value;
+  t.location    = {
+    room:     document.getElementById('tk-room').value.trim(),
+    freezer:  document.getElementById('tk-freezer').value.trim(),
+    rack:     document.getElementById('tk-rack').value.trim(),
+    position: document.getElementById('tk-position').value.trim(),
+  };
+  t.temperature = document.getElementById('tk-temp').value;
+  t.updatedAt   = Date.now();
+  t.events      = t.events || [];
+
+  const who = (user && user.name) || 'Guest';
+  const note = document.getElementById('tk-note').value.trim();
+
+  if(prevStatus !== t.status)
+    t.events.unshift({ at:Date.now(), type:'status', who, note:`Status → ${STATUS_LABELS[t.status]}` });
+  if(prevTemp !== t.temperature && t.temperature)
+    t.events.unshift({ at:Date.now(), type:'temp', who, note:`Temperature set to ${t.temperature}` });
+  if(prevLoc !== JSON.stringify(t.location)){
+    const locStr = [t.location.room, t.location.freezer, t.location.rack, t.location.position].filter(Boolean).join(' · ');
+    if(locStr) t.events.unshift({ at:Date.now(), type:'location', who, note:`Moved to ${locStr}` });
+  }
+  if(note)
+    t.events.unshift({ at:Date.now(), type:'note', who, note });
+
+  t.events = t.events.slice(0, 200);
+  saveTrack(sampleId, t);
+  renderTrackEvents(t.events);
+  document.getElementById('tk-note').value = '';
+  showToast && showToast('✅ Tracking updated','ok');
+}
+
+function renderTrackEvents(events){
+  const box = document.getElementById('tk-events');
+  if(!box) return;
+  if(!events || !events.length){
+    box.innerHTML = '<div style="font-family:var(--fm);font-size:11px;color:var(--muted);text-align:center;padding:14px;">No activity yet</div>';
+    return;
+  }
+  const icons = { created:'✦', status:'◆', location:'▦', temp:'❄', note:'✎' };
+  box.innerHTML = events.slice(0, 30).map(e=>{
+    const d = new Date(e.at);
+    const ts = d.toLocaleDateString() + ' · ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    return `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #1a2d5a;">
+      <div style="font-size:14px;color:var(--cyan);width:18px;text-align:center;flex-shrink:0;">${icons[e.type]||'•'}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;color:var(--text);line-height:1.4;">${esc(e.note||'')}</div>
+        <div style="font-family:var(--fm);font-size:10px;color:var(--muted);margin-top:2px;">${esc(ts)} · ${esc(e.who||'')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Search across all tracked samples (used by History tab search bar)
+function searchTracks(q){
+  q = (q||'').toLowerCase();
+  const all = getAllTracks();
+  return Object.values(all).filter(t =>
+    (t.sampleId||'').toLowerCase().includes(q) ||
+    (t.org||'').toLowerCase().includes(q) ||
+    (t.gene||'').toLowerCase().includes(q) ||
+    (t.location && Object.values(t.location).some(v => (v||'').toLowerCase().includes(q)))
+  );
+}
+
+// ─── History ─────────────────────────────────────
+function saveH(e){let h=getHist();h.unshift(e);if(!isPro&&h.length>50) h=h.slice(0,50);if(h.length>500) h=h.slice(0,500);try{localStorage.setItem(HK,JSON.stringify(h));}catch(x){}}
+function getHist(){try{return JSON.parse(localStorage.getItem(HK)||'[]');}catch(x){return[];}}
+function clrHist(){if(confirm('Clear all history?')){localStorage.removeItem(HK);renderHist();showToast('History cleared','ok');}}
+function renderHist(){
+  const q=(document.getElementById('hsrch').value||'').toLowerCase();
+  let h=getHist();
+  if(q) h=h.filter(x=>(x.id||'').toLowerCase().includes(q)||(x.org||'').toLowerCase().includes(q)||(x.gene||'').toLowerCase().includes(q)||(x.ncbi||'').toLowerCase().includes(q));
+  const list=document.getElementById('hlist');
+  if(!h.length){list.innerHTML=`<div style="text-align:center;padding:24px;font-family:var(--fm);font-size:11px;color:var(--muted);">${q?'No results found':'No history yet.<br/>Generate some labels first.'}</div>`;return;}
+  list.innerHTML='';
+  h.forEach((x,i)=>{
+    const d=new Date(x.ts),ts=d.toLocaleDateString()+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const div=document.createElement('div');div.className='hi';
+    const meta=x.type==='custom'?`<div class="hm">${esc(x.data.slice(0,55))}</div>`:`<div class="hm">${esc(x.org||'')}${x.gene?' · '+esc(x.gene):''}${x.size?' · '+x.size.toUpperCase():''}</div>`;
+
+    // Tracking status badge (if this sample has a tracking entry)
+    let trackStatus = '';
+    if(x.id && x.id!=='—'){
+      const t = getTrack(x.id);
+      if(t){
+        const c = STATUS_COLORS[t.status] || '#8aafd4';
+        trackStatus = `<span style="display:inline-block;background:${c}1a;border:1px solid ${c}66;color:${c};font-size:9px;padding:1px 7px;border-radius:8px;margin-left:6px;font-family:var(--fm);letter-spacing:.4px;">● ${STATUS_LABELS[t.status]}</span>`;
+      }
+    }
+
+    // Track button (only for lab/batch — they have a Sample ID)
+    const trackBtn = (x.type==='lab' || x.type==='batch') && x.id && x.id!=='—'
+      ? `<button class="hdl" style="right:36px;background:rgba(0,229,255,0.15);color:var(--cyan);border:1px solid rgba(0,229,255,0.4);border-radius:6px;padding:3px 8px;font-size:11px;width:auto;height:auto;" onclick="openTrackFromHist('${esc(x.id)}','${esc(x.org||'')}','${esc(x.gene||'')}','${esc(x.ncbi||'')}',event)">⌖ Track</button>`
+      : '';
+
+    div.innerHTML=`<button class="hdl" onclick="delH(${i},event)">✕</button>${trackBtn}
+      <div class="hid"><span class="hbadge">${x.type.toUpperCase()}</span>${esc(x.id||x.data.slice(0,30))}${trackStatus}</div>${meta}
+      <div class="ht">${ts}</div>`;
+    div.addEventListener('click',(e)=>loadH(x,e));
+    list.appendChild(div);
+  });
+}
+function openTrackFromHist(id, org, gene, ncbi, ev){
+  if(ev) ev.stopPropagation();
+  openTrackModal(id, {org, gene, ncbi});
+}
+function delH(i,e){e.stopPropagation();let h=getHist();h.splice(i,1);try{localStorage.setItem(HK,JSON.stringify(h));}catch(x){}renderHist();}
+function loadH(x,e){
+  if(e) e.stopPropagation();
+  if(x.type==='lab'||x.type==='batch'){
+    document.getElementById('sid').value=x.id||'';
+    document.getElementById('sorg').value=x.org||'';
+    document.getElementById('sgene').value=x.gene||'';
+    switchTab('lab',null);
+  } else {
+    document.getElementById('ctxt').value=x.data||'';
+    switchTab('custom',null);
+  }
+  showToast('✅ Loaded from history','ok');
+}
+
+// ─── Bluetooth ────────────────────────────────────
+function setBtUI(st,name){
+  const sub=document.getElementById('btsub'),ci=document.getElementById('bt-conn-info');
+  const cb=document.getElementById('bt-conn-btn'),db=document.getElementById('bt-disc-btn');
+  const topBtn=document.getElementById('bt-topbar-btn');
+  const topIcon=document.getElementById('bt-topbar-icon');
+  ['bpl','bpb','bpc'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=st!=='on';});
+  if(st==='sc'){
+    if(sub) sub.textContent='LOOKING FOR PRINTERS…';
+    if(topIcon) topIcon.textContent='⏳';
+  } else if(st==='on'){
+    if(sub) sub.textContent='CONNECTED';
+    if(document.getElementById('bt-dev-name')) document.getElementById('bt-dev-name').textContent=name||'Printer';
+    if(ci) ci.style.display='block';
+    if(cb) cb.style.display='none';
+    if(db) db.style.display='block';
+    if(topBtn) topBtn.classList.add('connected');
+    if(topIcon) topIcon.textContent='🖨️';
+  } else {
+    if(sub) sub.textContent='SCAN FOR NEARBY DEVICES';
+    if(ci) ci.style.display='none';
+    if(cb) cb.style.display='block';
+    if(db) db.style.display='none';
+    if(topBtn) topBtn.classList.remove('connected');
+    if(topIcon) topIcon.textContent='📶';
+  }
+}
+async function connBT(){
+  if(!navigator.bluetooth){alert('Web Bluetooth requires Chrome on Android or Desktop.');return;}
+  try{
+    setBtUI('sc');
+    btDev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,
+      optionalServices:['000018f0-0000-1000-8000-00805f9b34fb','49535343-fe7d-4ae5-8fa9-9fafd205e455','e7810a71-73ae-499d-8c15-faa9aef0c3f2']});
+    const srv=await btDev.gatt.connect();
+    btDev.addEventListener('gattserverdisconnected',()=>{btConn=false;btChr=null;btDev=null;setBtUI('idle');});
+    const svcs=await srv.getPrimaryServices();
+    for(const s of svcs){const cs=await s.getCharacteristics();for(const c of cs){if(c.properties.write||c.properties.writeWithoutResponse){btChr=c;break;}}if(btChr)break;}
+    btConn=true;setBtUI('on',btDev.name||'Label Printer');closeModal('bt-modal');showToast('🖨️ Printer connected!','ok');
+  }catch(e){setBtUI('idle');if(e.name!=='NotFoundError')alert('Connection failed: '+e.message);}
+}
+function discBT(){if(btDev&&btDev.gatt.connected)btDev.gatt.disconnect();btConn=false;btChr=null;btDev=null;setBtUI('idle');closeModal('bt-modal');}
+async function pbt(shId){
+  const sheetEl = document.getElementById(shId);
+  const labelCount = sheetEl ? sheetEl.children.length : 0;
+
+  // 🟢 DEMO MODE — skip real Bluetooth print
+  if(inDemoMode()){
+    if(!labelCount){ alert('Generate labels first.'); return; }
+    setTimeout(()=>alert(`✅ Demo Mode Success!\n\n${labelCount} label${labelCount===1?'':'s'} would have been sent to your Bluetooth printer.\n\n(Demo Mode is ON — toggle it off in Profile → Developer panel for real Bluetooth printing.)`), 50);
+    return;
+  }
+
+  if(!btConn){openModal('bt-modal');return;}
+  const cv=document.querySelector('#'+shId+' canvas');if(!cv){alert('Generate labels first.');return;}
+  if(!btChr){smartPrint(shId);return;}
+  try{
+    const bytes=new Uint8Array(await(await new Promise(r=>cv.toBlob(r,'image/png'))).arrayBuffer());
+    const C=512;for(let i=0;i<bytes.length;i+=C){
+      const chunk=bytes.slice(i,i+C);
+      if(btChr.properties.writeWithoutResponse) await btChr.writeValueWithoutResponse(chunk);
+      else await btChr.writeValue(chunk);
+      await new Promise(r=>setTimeout(r,20));
+    }
+    showToast('✅ Sent to printer!','ok');
+  }catch(e){alert('Print error: '+e.message);smartPrint(shId);}
+}
+
+// ─── Payment / Upgrade ────────────────────────────
+function selectPlan(p){
+  selPlanType=p;
+  document.getElementById('plan-weekly').classList.toggle('on', p==='weekly');
+  document.getElementById('plan-monthly').classList.toggle('on',p==='monthly');
+  document.getElementById('plan-annual').classList.toggle('on', p==='annual');
+  const labels = {
+    weekly:  `Weekly ₹${PRO_PRICE_WEEKLY}`,
+    monthly: `Monthly ₹${PRO_PRICE_MONTHLY}`,
+    annual:  `Annual ₹${PRO_PRICE_ANNUAL}`
+  };
+  document.getElementById('pay-plan-label').textContent = labels[p] || labels.monthly;
+}
+function selPay(el,m){
+  selPayMethod=m;
+  document.querySelectorAll('.pay-m').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+}
+// ── Backend base URL (auto: same origin) ──────────
+const TT_API_BASE = (function(){
+  try {
+    // If served via the Emergent preview / production: same origin.
+    return window.location.origin;
+  } catch(e){ return ''; }
+})();
+
+async function processPay(){
+  // Server-authoritative plan (price comes from server — never trust client)
+  const plan = selPlanType; // 'weekly' | 'monthly' | 'annual'
+  const descMap = {
+    weekly:  `TubeTag Pro — Weekly ₹${PRO_PRICE_WEEKLY}`,
+    monthly: `TubeTag Pro — Monthly ₹${PRO_PRICE_MONTHLY}`,
+    annual:  `TubeTag Pro — Annual ₹${PRO_PRICE_ANNUAL}`,
+  };
+  const desc = descMap[plan] || descMap.monthly;
+
+  // 1) Ask our backend to create a real Razorpay order
+  let orderResp;
+  try {
+    const r = await fetch(`${TT_API_BASE}/api/razorpay/create-order`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        plan: plan,
+        user_email: (user && user.email) || '',
+        user_name:  (user && user.name)  || '',
+      })
+    });
+    if(!r.ok){
+      const t = await r.text();
+      throw new Error(`Server ${r.status}: ${t}`);
+    }
+    orderResp = await r.json();
+  } catch(e){
+    console.error('create-order error', e);
+    showToast('❌ Could not start payment. Please try again.','warn');
+    return;
+  }
+
+  // 2) Open Razorpay checkout with the server-issued order_id
+  const options = {
+    key: orderResp.razorpay_key_id,
+    amount: orderResp.amount,
+    currency: orderResp.currency,
+    order_id: orderResp.order_id,
+    name: 'TubeTag',
+    description: desc,
+    image: 'icons/icon-192.png',
+
+    handler: async function(response){
+      // 3) Verify the signature server-side (THE security gate)
+      try {
+        const v = await fetch(`${TT_API_BASE}/api/razorpay/verify-payment`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            razorpay_order_id:   response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature:  response.razorpay_signature,
+            plan: plan,
+            user_email: (user && user.email) || '',
+          })
+        });
+        const data = await v.json();
+        if(!v.ok || !data.ok){
+          throw new Error(data.detail || 'verification failed');
+        }
+        activatePro(plan, response.razorpay_payment_id);
+      } catch(e){
+        console.error('verify-payment error', e);
+        showToast('⚠️ Payment received but verification failed. Contact support.','warn');
+      }
+    },
+
+    prefill: {
+      name:    (user && user.name)  || '',
+      email:   (user && user.email) || '',
+      contact: ''
+    },
+
+    notes: {
+      plan: plan,
+      user_email: (user && user.email) || 'guest',
+      app: 'TubeTag'
+    },
+
+    theme: { color: '#00e5ff' },
+    modal: {
+      ondismiss: function(){
+        showToast('Payment cancelled','warn');
+      }
+    }
+  };
+
+  const rzp = new Razorpay(options);
+  rzp.on('payment.failed', function(response){
+    showToast('❌ Payment failed: '+response.error.description, 'warn');
+    console.error('Razorpay error:', response.error);
+  });
+
+  closeModal('upgrade-modal');
+  rzp.open();
+}
+
+// ── Activate Pro after successful payment ─────────
+function activatePro(plan, paymentId){
+  isPro = true;
+  localStorage.setItem('tt_pro', 'true');
+  localStorage.setItem('tt_pro_plan', plan);
+  localStorage.setItem('tt_pro_payment_id', paymentId);
+  localStorage.setItem('tt_pro_date', new Date().toISOString());
+
+  updatePlanUI();
+  updateQuota();
+
+  // Update success modal content
+  document.getElementById('success-pay-id').textContent = paymentId;
+  document.getElementById('success-email').textContent = user.email || 'your email';
+
+  showToast('🎉 TubeTag Pro activated! All features unlocked.', 'gold');
+  setTimeout(()=>openModal('success-modal'), 500);
+}
+
+function cancelPro(){
+  if(confirm('Are you sure you want to cancel Pro?\nYou will lose all Pro features.')){
+    isPro=false;
+    localStorage.removeItem('tt_pro');
+    localStorage.removeItem('tt_pro_plan');
+    localStorage.removeItem('tt_pro_payment_id');
+    localStorage.removeItem('tt_pro_date');
+    closeModal('pro-status-modal');
+    updatePlanUI();
+    updateQuota();
+    showToast('Pro plan cancelled','warn');
+  }
+}
+
+function openProStatus(){
+  const plan=localStorage.getItem('tt_pro_plan')||'monthly';
+  const date=localStorage.getItem('tt_pro_date')||'';
+  const payid=localStorage.getItem('tt_pro_payment_id')||'—';
+  const planLabels = {weekly:'Pro Weekly — ₹10/wk', monthly:'Pro Monthly — ₹150/mo', annual:'Pro Annual — ₹1,000/yr'};
+  document.getElementById('ps-plan').textContent = planLabels[plan] || planLabels.monthly;
+  document.getElementById('ps-date').textContent=date?new Date(date).toLocaleDateString():'—';
+  document.getElementById('ps-payid').textContent=payid;
+  openModal('pro-status-modal');
+}
+
+// ─── Modal helpers ────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('vis');}
+function closeModal(id){document.getElementById(id).classList.remove('vis');}
+
+// ─── Toast ───────────────────────────────────────
+let toastTm=null;
+function showToast(msg,type){
+  const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');
+  t.classList.add('vis');if(toastTm) clearTimeout(toastTm);
+  toastTm=setTimeout(()=>t.classList.remove('vis'),3500);
+}
+
+// ─── Init ─────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  // Modal overlay: tap outside to close
+  document.querySelectorAll('.modal-overlay').forEach(m=>{
+    m.addEventListener('click',function(e){if(e.target===this)this.classList.remove('vis');});
+  });
+  // Launch app if already logged in
+  if(user) launchApp();
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+});
+</script>
+</body>
+</html>
