@@ -2860,7 +2860,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
   // Launch app if already logged in
   if(user) launchApp();
-  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('/itag/sw.js').catch(()=>{});
 });
 </script>
 </body>
