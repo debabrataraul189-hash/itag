@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "io.github.debabrataraul189_hash.twa",
-        "sha256_cert_fingerprints": ["D2:1A:AE:84:9D:E8:CB:01:8B:DA:02:7A:D6:C0:5D:B9:0A:6E:61:29:91:A9:BE:DB:05:FF:64:22:B8:D1:A8:C2"]
+        "package_name": "app.netlify.tubetag",
+        "sha256_cert_fingerprints": ["2E:78:82:C2:3B:2F:86:AA:AC:CC:85:8E:F5:62:C4:3D:C9:8D:FD:13:C4:A0:52:CA:81:20:D1:B6:D5:D3:3A:1A"]
       }
     }]
