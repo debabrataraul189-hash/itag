@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "com.github.twa",
-        "sha256_cert_fingerprints": ["F4:5C:36:21:AA:4B:4A:7D:F1:94:CB:FE:B5:6E:A2:6F:8B:E1:EE:8C:DE:74:C0:34:C2:6B:D6:5D:5D:01:4D:FC"]
+        "package_name": "itube.app",
+        "sha256_cert_fingerprints": ["17:46:B2:02:70:13:13:07:51:62:81:0B:19:3D:EC:0D:C5:D5:76:EB:BF:B9:47:01:56:D0:6B:2F:D9:48:25:C8"]
       }
     }]
