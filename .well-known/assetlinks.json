@@ -2,8 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "itubetag.app",
-        "sha256_cert_fingerprints": ["EB:AF:12:25:E0:98:29:61:90:74:80:4B:F5:67:2F:C8:E8:C4:CD:16:52:D1:A2:78:09:A6:C8:99:BC:67:36:2D"]
+        "package_name": "io.github.debabrataraul189_hash.twa",
+        "sha256_cert_fingerprints": ["D2:1A:AE:84:9D:E8:CB:01:8B:DA:02:7A:D6:C0:5D:B9:0A:6E:61:29:91:A9:BE:DB:05:FF:64:22:B8:D1:A8:C2"]
       }
     }]
-
