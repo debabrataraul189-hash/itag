@@ -1,10 +1,10 @@
 {
   "name": "iTubeTag — Smart Lab QR Labels",
   "short_name": "iTubeTag",
-  "id": "/tubetag/",
+  "id": "/itag/",
   "description": "Smart QR labels for every lab sample. Free & Pro plans. Bluetooth printing for portable label printers.",
-  "start_url": "/tubetag/index.html",
-  "scope": "/tubetag/",
+  "start_url": "/itag/index.html",
+  "scope": "/itag/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
@@ -20,9 +20,9 @@
     { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "New Lab Label", "url": "/tubetag/index.html",       "description": "Generate a new QR label" },
-    { "name": "Batch",         "url": "/tubetag/index.html#batch", "description": "Create batch of labels" },
-    { "name": "Scan QR",       "url": "/tubetag/index.html#scan",  "description": "Scan a QR code" }
+    { "name": "New Lab Label", "url": "/itag/index.html",       "description": "Generate a new QR label" },
+    { "name": "Batch",         "url": "/itag/index.html#batch", "description": "Create batch of labels" },
+    { "name": "Scan QR",       "url": "/itag/index.html#scan",  "description": "Scan a QR code" }
   ],
   "prefer_related_applications": false
 }
