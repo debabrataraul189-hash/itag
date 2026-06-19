@@ -2,8 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "itubtag.app",
-        "sha256_cert_fingerprints": ["5C:24:8C:A3:44:56:92:30:B6:C5:9D:8D:52:9B:BF:EC:1B:3C:79:A7:8B:1F:3D:1B:05:58:B1:9F:32:F5:C6:EE"]
+        "package_name": "itubetag.app",
+        "sha256_cert_fingerprints": ["C8:7C:9D:92:81:2E:B5:BB:AC:00:4F:FF:29:68:BB:61:AE:70:1B:DA:78:91:C8:D1:4A:19:D8:F0:B4:28:F6:C0"]
       }
     }]
-
