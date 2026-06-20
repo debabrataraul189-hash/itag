@@ -1,8 +1,0 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "app.netlify.tubetag",
-        "sha256_cert_fingerprints": ["2E:78:82:C2:3B:2F:86:AA:AC:CC:85:8E:F5:62:C4:3D:C9:8D:FD:13:C4:A0:52:CA:81:20:D1:B6:D5:D3:3A:1A"]
-      }
-    }]
